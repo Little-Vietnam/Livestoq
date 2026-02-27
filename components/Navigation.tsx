@@ -35,9 +35,7 @@ export function TopNav() {
               className="h-10 w-auto"
               priority
             />
-            <span className="hidden sm:inline text-sm font-semibold text-primary-700 tracking-wide">
-              Livestoq
-            </span>
+            
           </Link>
           <div className="flex items-center space-x-3">
             <Link href="/scan" className={linkClass("/scan")}>
