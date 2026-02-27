@@ -209,7 +209,7 @@ export default function MarketplacePage() {
                       <p>
                         Weight: {listing.assessment.prediction.weightKg} kg
                       </p>
-                      <p>Age: {listing.assessment.prediction.ageEligibility}</p>
+                      <p>Age: {listing.assessment.prediction.ageEligibility} months</p>
                       <p>Health: {listing.assessment.prediction.healthRisk}</p>
                     </div>
                   )}

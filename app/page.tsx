@@ -18,7 +18,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="text-center lg:text-left">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                 Redefining the way livestock is bought, sold, and trusted
+                Redefining the way livestock is bought, sold, and trusted
               </h1>
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0">
               AI Computer Vision for a safer Livestock Trading through Animal-Level Verification 
@@ -94,10 +94,10 @@ export default function Home() {
                 <span className="text-3xl font-bold text-white">1</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Capture 4 Angles
+                Capture 5 Angles
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Take photos from front, left, back, and right sides of the animal using your mobile device
+                Take photos from front, left, back, right sides, and teeth of the animal using your mobile device
               </p>
             </div>
             <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 hover:shadow-lg transition-shadow">
@@ -293,7 +293,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; 2024 Livestoq. All rights reserved.</p>
+            <p>&copy; 2026 Livestoq. All rights reserved.</p>
           </div>
         </div>
       </footer>

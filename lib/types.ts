@@ -9,6 +9,65 @@ export type Confidence = {
   gender: number;         // 0.70–0.99
 };
 
+// ── ML Pipeline Types ──────────────────────────────────────────────────
+
+export type MLDimensions = {
+  body_length_cm: number;
+  body_width_cm: number;
+  tube_girth_cm: number;
+  body_height_cm: number;
+  chest_width_cm: number;
+  abdominal_girth_cm: number;
+  chest_depth_cm: number;
+  chest_girth_cm: number;
+};
+
+export type MLWeightResult = {
+  predicted_kg: number;
+  range_kg: [number, number];
+  bcs: number;
+  breed: string;
+  breed_factor: number;
+  method_weights: Record<string, number>;
+};
+
+export type MLPoseResult = {
+  orientation: string;
+  yaw_deg: number;
+  roll_deg: number;
+  pitch_deg: number;
+  foreshortening_factor: number;
+  is_valid: boolean;
+  confidence: number;
+};
+
+export type MLAnalysisResult = {
+  success: boolean;
+  image_size: { width: number; height: number };
+  breed: string;
+  segmentation: {
+    bbox: number[];
+    area_pixels: number;
+    confidence: number;
+  };
+  distance: {
+    distance_m: number;
+    method: string;
+    pixels_per_meter: number;
+    confidence: number;
+  };
+  keypoints: {
+    num_detected: number;
+    method: string;
+  };
+  pose: MLPoseResult;
+  dimensions: MLDimensions;
+  dimension_confidence: Record<string, number | string>;
+  weight: MLWeightResult;
+};
+
+// ── Scan Assessment (updated) ──────────────────────────────────────────
+
 export type ScanAssessment = {
   id: string;
   createdAt: string; // ISO
@@ -23,6 +82,8 @@ export type ScanAssessment = {
     fairPriceIdrRange: { min: number; max: number }; // e.g., 800000–900000
   };
   confidence: Confidence;
+  // ML pipeline data (present when real ML analysis is used)
+  mlAnalysis?: MLAnalysisResult;
 };
 
 export type MarketplaceListing = {

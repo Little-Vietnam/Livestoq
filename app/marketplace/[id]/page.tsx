@@ -214,9 +214,8 @@ export default function ListingDetailPage() {
             {/* Disclaimer */}
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                <strong>Disclaimer:</strong> AI-based estimate (MVP mock). Always verify
-                directly. Verify before you buy. Fraud happens fastest when decisions are
-                rushed.
+                <strong>Disclaimer:</strong> AI-based assessment. Results may vary based
+                on image quality and conditions. Always verify directly before purchasing.
               </p>
             </div>
           </div>

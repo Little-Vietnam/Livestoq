@@ -5,7 +5,24 @@ import { useRouter } from "next/navigation";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { Angle } from "@/lib/types";
 import { generateMockAssessment } from "@/lib/mockAssessment";
+import { analyzeWithML, dataURLtoFile, buildAssessmentFromML } from "@/lib/mlAnalysis";
 import { store } from "@/lib/store";
+
+const BREEDS = [
+  "generic",
+  "holstein",
+  "angus",
+  "hereford",
+  "brahman",
+  "jersey",
+  "simmental",
+  "limousin",
+  "charolais",
+  "bali",
+  "ongole",
+  "madura",
+  "peranakan_ongole",
+];
 
 const ANGLES: Array<{ key: Angle; label: string; icon: string }> = [
   { key: "front", label: "Front", icon: "⬆️" },
@@ -20,6 +37,9 @@ export default function ScanPage() {
   const [images, setImages] = useState<Partial<Record<Angle, string>>>({});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<string>("");
+  const [breed, setBreed] = useState<string>("generic");
+  const [useMLPipeline, setUseMLPipeline] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string>("");
@@ -54,18 +74,44 @@ export default function ScanPage() {
     }
 
     setIsAnalyzing(true);
+    setAnalysisStatus("");
 
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    try {
+      if (useMLPipeline) {
+        // Use real ML pipeline
+        // Prefer left side image (best for lateral-view pipeline)
+        const primaryImage = allImages.left || allImages.right || allImages.front;
+        setAnalysisStatus("Sending image to ML pipeline...");
+        const imageFile = dataURLtoFile(primaryImage, "livestock.jpg");
 
-    // Generate mock assessment
-    const assessment = generateMockAssessment(allImages);
-    
-    // Store assessment
-    store.addScanAssessment(assessment);
+        setAnalysisStatus("Running segmentation & keypoint detection...");
+        const mlResult = await analyzeWithML(imageFile, breed);
 
-    // Navigate to results
-    router.push(`/scan/results?id=${assessment.id}`);
+        setAnalysisStatus("Building assessment...");
+        const assessment = buildAssessmentFromML(mlResult, allImages);
+
+        store.addScanAssessment(assessment);
+        router.push(`/scan/results?id=${assessment.id}`);
+      } else {
+        // Fallback to mock assessment
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        const assessment = generateMockAssessment(allImages);
+        store.addScanAssessment(assessment);
+        router.push(`/scan/results?id=${assessment.id}`);
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      setAnalysisStatus("");
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      
+      if (confirm(`ML pipeline failed: ${errorMsg}\n\nUse mock assessment instead?`)) {
+        const assessment = generateMockAssessment(allImages);
+        store.addScanAssessment(assessment);
+        router.push(`/scan/results?id=${assessment.id}`);
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const startCamera = async () => {
@@ -121,6 +167,57 @@ export default function ScanPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           Scan Livestock
         </h1>
+
+        {/* ML Pipeline Settings */}
+        <div className="card p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-700">AI Analysis Mode</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                useMLPipeline
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}>
+                {useMLPipeline ? "ML Pipeline" : "Demo Mode"}
+              </span>
+            </div>
+            <button
+              onClick={() => setUseMLPipeline(!useMLPipeline)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                useMLPipeline ? "bg-primary-600" : "bg-gray-300"
+              }`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                useMLPipeline ? "translate-x-6" : "translate-x-1"
+              }`} />
+            </button>
+          </div>
+          {useMLPipeline ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Breed (for weight correction)
+              </label>
+              <select
+                value={breed}
+                onChange={(e) => setBreed(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                {BREEDS.map((b) => (
+                  <option key={b} value={b}>
+                    {b.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                The left side image will be used for ML dimension analysis (lateral view is optimal).
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-yellow-600">
+              Demo mode uses simulated data. Enable ML Pipeline for real weight and dimension analysis.
+            </p>
+          )}
+        </div>
 
         {/* Stepper */}
         <div className="mb-8">
@@ -185,12 +282,14 @@ export default function ScanPage() {
                 >
                   Retake
                 </button>
-                <button
-                  onClick={() => setCurrentStep(Math.min(currentStep + 1, ANGLES.length - 1))}
-                  className="px-4 py-3 rounded-lg font-semibold text-white bg-primary-600 hover:bg-primary-700"
-                >
-                  Next angle
-                </button>
+                {currentStep < ANGLES.length - 1 && (
+                  <button
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                    className="px-4 py-3 rounded-lg font-semibold text-white bg-primary-600 hover:bg-primary-700"
+                  >
+                    Next angle →
+                  </button>
+                )}
               </div>
             </div>
           ) : (
@@ -238,13 +337,13 @@ export default function ScanPage() {
                 <button
                   onClick={captureFromCamera}
                   disabled={!cameraStream}
-                  className={`w-full px-6 py-3 rounded-lg font-semibold ${
+                  className={`w-full mt-3 px-6 py-3 rounded-lg font-semibold ${
                     cameraStream
                       ? "bg-primary-600 text-white hover:bg-primary-700"
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
                   }`}
                 >
-                  {cameraStream ? "Capture from camera" : "Start camera to capture"}
+                  {cameraStream ? "📸 Capture" : "Start camera first"}
                 </button>
               </div>
 
@@ -258,7 +357,7 @@ export default function ScanPage() {
                     className="hidden"
                   />
                   <div className="w-full px-6 py-4 bg-white text-primary-700 rounded-lg text-center font-semibold border-2 border-primary-200 cursor-pointer hover:bg-primary-50">
-                    📷 Take Photo (system prompt)
+                    📷 Take Photo
                   </div>
                 </label>
                 <label className="block">
@@ -283,15 +382,15 @@ export default function ScanPage() {
                 onClick={() => setCurrentStep(currentStep - 1)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
-                Previous
+                ← Previous
               </button>
             )}
-            {currentStep < ANGLES.length - 1 && (
+            {currentStep < ANGLES.length - 1 && !images[currentAngle.key] && (
               <button
                 onClick={() => setCurrentStep(currentStep + 1)}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
               >
-                Next
+                Skip →
               </button>
             )}
           </div>
@@ -332,6 +431,14 @@ export default function ScanPage() {
 
         {/* Analyze Button - Sticky Bottom on Mobile */}
         <div className="sticky bottom-20 md:relative md:bottom-0 bg-white pt-4 pb-4 md:pb-0 border-t md:border-t-0">
+          {analysisStatus && isAnalyzing && (
+            <div className="mb-3 p-3 bg-primary-50 border border-primary-100 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                <p className="text-sm text-primary-700 font-medium">{analysisStatus}</p>
+              </div>
+            </div>
+          )}
           <button
             onClick={handleAnalyze}
             disabled={!allImagesCaptured || isAnalyzing}
@@ -363,10 +470,12 @@ export default function ScanPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Analyzing...
+                {useMLPipeline ? "Running ML Pipeline..." : "Analyzing..."}
               </span>
             ) : (
-              "Analyze"
+              <span className="flex items-center justify-center gap-2">
+                {useMLPipeline && "🧠 "}Analyze{useMLPipeline ? " with ML" : ""}
+              </span>
             )}
           </button>
         </div>
