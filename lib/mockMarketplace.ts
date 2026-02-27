@@ -8,18 +8,16 @@ import { generateMockAssessment } from "./mockAssessment";
 export function getMockMarketplaceListings(): MarketplaceListing[] {
   // Generate mock assessments for verified listings
   const assessment1 = generateMockAssessment({
-    front: "https://example.com/images/cow1.jpg",
-    left: "https://example.com/images/cow1.jpg",
+    side: "https://example.com/images/cow1.jpg",
+    head: "https://example.com/images/cow1.jpg",
     back: "https://example.com/images/cow1.jpg",
-    right: "https://example.com/images/cow1.jpg",
     teeth: "https://example.com/images/cow1.jpg",
   });
-  
+
   const assessment2 = generateMockAssessment({
-    front: "https://example.com/images/cow2.jpg",
-    left: "https://example.com/images/cow2.jpg",
+    side: "https://example.com/images/cow2.jpg",
+    head: "https://example.com/images/cow2.jpg",
     back: "https://example.com/images/cow2.jpg",
-    right: "https://example.com/images/cow2.jpg",
     teeth: "https://example.com/images/cow2.jpg",
   });
 

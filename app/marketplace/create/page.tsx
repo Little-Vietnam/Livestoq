@@ -43,9 +43,9 @@ function CreateListingContent() {
         setScanAssessment(assessment);
         setFormData((prev) => ({
           ...prev,
-          imageUrl: assessment.images.front, // Use front image as default
+          imageUrl: assessment.images.side ?? "", // Use side image as default
         }));
-        setImagePreview(assessment.images.front);
+        setImagePreview(assessment.images.side ?? "");
       }
     }
   }, [scanId]);

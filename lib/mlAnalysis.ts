@@ -1,19 +1,26 @@
-import { MLAnalysisResult, ScanAssessment, Angle, Confidence } from "./types";
+import {
+  MLFullAnalysisResult,
+  ScanAssessment,
+  Angle,
+  Confidence,
+  MLSkinDiseaseResult,
+} from "./types";
 
 /**
- * Send an image to the ML pipeline API for analysis.
- *
- * @param imageFile - The image file or base64 data URL
- * @param breed - Breed name for weight correction
- * @returns ML analysis result from the pipeline
+ * Send side image (and optional teeth image) to ML pipeline for full analysis.
  */
 export async function analyzeWithML(
-  imageFile: File | Blob,
+  sideImageFile: File | Blob,
+  teethImageFile: File | Blob | null,
   breed: string = "generic"
-): Promise<MLAnalysisResult> {
+): Promise<MLFullAnalysisResult> {
   const formData = new FormData();
-  formData.append("image", imageFile);
+  formData.append("side_image", sideImageFile);
   formData.append("breed", breed);
+
+  if (teethImageFile) {
+    formData.append("teeth_image", teethImageFile);
+  }
 
   const response = await fetch("/api/analyze", {
     method: "POST",
@@ -46,10 +53,8 @@ export function dataURLtoFile(dataURL: string, filename: string): File {
 
 /**
  * Estimate fair price range based on weight in kg.
- * Uses Indonesian market rates for Qurban-eligible cattle.
  */
 function estimateFairPrice(weightKg: number): { min: number; max: number } {
-  // Approximate IDR per kg of live cattle (Indonesian market)
   const pricePerKgLow = 55_000;
   const pricePerKgHigh = 75_000;
   return {
@@ -59,57 +64,99 @@ function estimateFairPrice(weightKg: number): { min: number; max: number } {
 }
 
 /**
- * Determine health risk from BCS (Body Condition Score).
+ * Derive health risk from BCS + skin disease status.
  */
-function bcsToHealthRisk(bcs: number): {
-  risk: "Low" | "Medium" | "High";
-  explanation: string;
-} {
+function deriveHealthRisk(
+  bcs: number,
+  skinDisease?: MLSkinDiseaseResult
+): { risk: "Low" | "Medium" | "High"; explanation: string } {
+  // Start with BCS-based risk
+  let risk: "Low" | "Medium" | "High";
+  let explanation: string;
+
   if (bcs >= 4 && bcs <= 7) {
-    return { risk: "Low", explanation: "Body condition is within the optimal range, indicating good health and nutrition." };
+    risk = "Low";
+    explanation = "Body condition is within the optimal range.";
   } else if ((bcs >= 3 && bcs < 4) || (bcs > 7 && bcs <= 8)) {
-    return { risk: "Medium", explanation: `Body condition score of ${bcs.toFixed(1)} is slightly outside optimal range. Monitor nutrition and feeding program.` };
+    risk = "Medium";
+    explanation = `BCS ${bcs.toFixed(1)} is slightly outside optimal range.`;
   } else {
-    const detail = bcs < 3
-      ? "Animal appears underweight, which may indicate malnutrition, parasites, or illness."
-      : "Animal appears overconditioned, which may cause metabolic issues or calving difficulties.";
-    return { risk: "High", explanation: `BCS ${bcs.toFixed(1)}/9. ${detail}` };
+    risk = "High";
+    explanation = bcs < 3
+      ? "Animal appears underweight, possible malnutrition."
+      : "Animal appears overconditioned, metabolic risk.";
   }
+
+  // Elevate risk if skin disease detected
+  if (skinDisease) {
+    if (skinDisease.overall_status === "diseased") {
+      risk = "High";
+      const diseaseNames = skinDisease.conditions.map((c) => c.name).join(", ");
+      explanation += ` Skin conditions detected: ${diseaseNames}.`;
+    } else if (skinDisease.overall_status === "suspect") {
+      if (risk === "Low") risk = "Medium";
+      explanation += " Possible skin anomalies detected — recommend veterinary check.";
+    }
+  }
+
+  return { risk, explanation };
 }
 
 /**
- * Build a full ScanAssessment from ML pipeline results + captured images.
- * Combines ML-derived weight/dimensions with heuristic species/age/gender.
+ * Build a full ScanAssessment from combined ML pipeline results.
  */
 export function buildAssessmentFromML(
-  mlResult: MLAnalysisResult,
-  images: Record<Angle, string>
+  mlResult: MLFullAnalysisResult,
+  images: Partial<Record<Angle, string>>
 ): ScanAssessment {
   const id = `scan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const createdAt = new Date().toISOString();
 
-  const weightKg = Math.round(mlResult.weight.predicted_kg * 10) / 10;
-  const bcs = mlResult.weight.bcs;
-  const healthInfo = bcsToHealthRisk(bcs);
-  const fairPrice = estimateFairPrice(weightKg);
+  const dw = mlResult.dimension_weight;
 
-  // Use ML confidence values where available
-  const segConf = mlResult.segmentation.confidence;
-  const distConf = mlResult.distance.confidence;
-  const poseConf = mlResult.pose.confidence;
-  const dimConfValues = Object.values(mlResult.dimension_confidence).map(
-    (v) => (typeof v === "string" ? parseFloat(v) : v)
-  );
-  const avgDimConf = dimConfValues.reduce((sum, v) => sum + v, 0) / dimConfValues.length;
+  // Weight
+  const weightKg = dw
+    ? Math.round(dw.weight.predicted_kg * 10) / 10
+    : 0;
+  const bcs = dw?.weight.bcs ?? 5;
+
+  // Age (from teeth)
+  const agePrediction = mlResult.age_prediction;
+  const ageMonths = agePrediction?.predicted_age_months;
+  const ageDisplay = ageMonths != null ? String(ageMonths) : "N/A";
+
+  // Health risk (BCS + skin)
+  const healthInfo = deriveHealthRisk(bcs, mlResult.skin_disease);
+
+  // Fair price
+  const fairPrice = weightKg > 0
+    ? estimateFairPrice(weightKg)
+    : { min: 0, max: 0 };
+
+  // Confidence scores
+  const segConf = dw?.segmentation.confidence ?? 0.5;
+  const distConf = dw?.distance.confidence ?? 0.5;
+  const poseConf = dw?.pose.confidence ?? 0.5;
+  const dimConfValues = dw
+    ? Object.values(dw.dimension_confidence).map((v) =>
+        typeof v === "string" ? parseFloat(v) : v
+      )
+    : [0.5];
+  const avgDimConf =
+    dimConfValues.reduce((sum, v) => sum + v, 0) / dimConfValues.length;
   const weightConf = Math.min(segConf, distConf, poseConf, avgDimConf);
+  const ageConf = agePrediction?.confidence ?? 0.5;
+  const skinConf = mlResult.skin_disease?.overall_confidence ?? 0.5;
 
   const confidence: Confidence = {
     species: Math.round(segConf * 100) / 100,
-    ageEligibility: 0.75, // Not determined by ML pipeline
+    ageEligibility: Math.round(ageConf * 100) / 100,
     weight: Math.round(Math.max(0.5, weightConf) * 100) / 100,
-    healthRisk: Math.round(Math.max(0.6, (segConf + poseConf) / 2) * 100) / 100,
+    healthRisk: Math.round(
+      Math.max(0.5, (segConf + poseConf + skinConf) / 3) * 100
+    ) / 100,
     fairPrice: Math.round(Math.max(0.5, weightConf * 0.9) * 100) / 100,
-    gender: 0.75, // Not determined by ML pipeline
+    gender: 0.75,
   };
 
   return {
@@ -118,7 +165,8 @@ export function buildAssessmentFromML(
     images,
     prediction: {
       species: "cow",
-      ageEligibility: "11",
+      ageMonths,
+      ageEligibility: ageDisplay,
       weightKg,
       gender: "male",
       healthRisk: healthInfo.risk,
@@ -126,6 +174,9 @@ export function buildAssessmentFromML(
       fairPriceIdrRange: fairPrice,
     },
     confidence,
-    mlAnalysis: mlResult,
+    mlAnalysis: dw,
+    skinDisease: mlResult.skin_disease,
+    agePrediction: mlResult.age_prediction,
+    analysesRun: mlResult.analyses_run,
   };
 }

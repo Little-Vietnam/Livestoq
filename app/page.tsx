@@ -94,10 +94,10 @@ export default function Home() {
                 <span className="text-3xl font-bold text-white">1</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Capture 5 Angles
+                Capture Your Livestock
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Take photos from front, left, back, right sides, and teeth of the animal using your mobile device
+                Take a side photo (required) plus optional head, back, and teeth images for deeper analysis
               </p>
             </div>
             <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 hover:shadow-lg transition-shadow">

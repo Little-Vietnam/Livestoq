@@ -1,36 +1,36 @@
 import { ScanAssessment, Angle, Confidence } from "./types";
 
 /**
- * Generates a mock AI assessment based on 5 angle images (including teeth).
- * Always returns fixed values: cow, 380kg, age 11, Medium health risk.
+ * Generates a mock AI assessment for demo mode.
+ * Returns fixed values: cow, 380kg, age 18 months, Medium health risk.
  */
 export function generateMockAssessment(
-  images: Record<Angle, string>
+  images: Partial<Record<Angle, string>>
 ): ScanAssessment {
   const id = `scan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const createdAt = new Date().toISOString();
 
-  // Fixed values as per requirements
+  const hasTeeth = !!images.teeth;
+
   const species: "cow" = "cow";
   const weightKg = 380;
-  const ageEligibility: "11" = "11";
+  const ageMonths = hasTeeth ? 18 : undefined;
+  const ageEligibility = hasTeeth ? "18" : "N/A";
   const gender: "male" = "male";
   const healthRisk: "Medium" = "Medium";
-  const healthRiskExplanation = "Disease has been detected from the cow's teeth, indicating a possible dental or gum infection that may affect its overall health.";
+  const healthRiskExplanation = "Demo mode — simulated assessment. Enable ML Pipeline for real analysis.";
 
-  // Fair price range for cow (380kg is a good size)
-  const min = 12000000; // 12M IDR
-  const max = 18000000; // 18M IDR
+  const min = 12000000;
+  const max = 18000000;
   const fairPriceIdrRange = { min, max };
 
-  // Generate confidence scores (0.70–0.99)
   const generateConfidence = (): number => {
     return Math.round((Math.random() * 0.29 + 0.70) * 100) / 100;
   };
 
   const confidence: Confidence = {
     species: generateConfidence(),
-    ageEligibility: generateConfidence(),
+    ageEligibility: hasTeeth ? generateConfidence() : 0.5,
     weight: generateConfidence(),
     healthRisk: generateConfidence(),
     fairPrice: generateConfidence(),
@@ -43,6 +43,7 @@ export function generateMockAssessment(
     images,
     prediction: {
       species,
+      ageMonths,
       ageEligibility,
       weightKg,
       gender,
@@ -51,5 +52,6 @@ export function generateMockAssessment(
       fairPriceIdrRange,
     },
     confidence,
+    analysesRun: ["mock"],
   };
 }

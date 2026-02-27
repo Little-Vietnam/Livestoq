@@ -1,4 +1,7 @@
-export type Angle = "front" | "left" | "back" | "right" | "teeth";
+// ── Image capture angles ────────────────────────────────────────────────
+
+/** The 4 capture slots in priority order: side (required) → head → back → teeth */
+export type Angle = "side" | "head" | "back" | "teeth";
 
 export type Confidence = {
   species: number;        // 0.70–0.99
@@ -41,8 +44,39 @@ export type MLPoseResult = {
   confidence: number;
 };
 
-export type MLAnalysisResult = {
-  success: boolean;
+// ── Age Prediction (from teeth image) ──────────────────────────────────
+
+export type MLAgeResult = {
+  predicted_age_months: number;
+  age_range_months: [number, number];
+  dentition_stage: string;       // "milk-teeth" | "2-tooth" | ... | "old"
+  wear_grade: number;            // 0–3
+  tooth_count: number;
+  confidence: number;
+  details: Record<string, unknown>;
+};
+
+// ── Skin Disease Detection (from side image) ───────────────────────────
+
+export type SkinCondition = {
+  name: string;
+  confidence: number;
+  severity: "none" | "mild" | "moderate" | "severe";
+  affected_area_pct: number;
+  description: string;
+};
+
+export type MLSkinDiseaseResult = {
+  overall_status: "healthy" | "suspect" | "diseased" | "unknown";
+  overall_confidence: number;
+  skin_quality_score: number;     // 0–100
+  conditions: SkinCondition[];
+  details: Record<string, unknown>;
+};
+
+// ── Dimension + Weight pipeline result (from side image) ───────────────
+
+export type MLDimensionWeightResult = {
   image_size: { width: number; height: number };
   breed: string;
   segmentation: {
@@ -66,24 +100,48 @@ export type MLAnalysisResult = {
   weight: MLWeightResult;
 };
 
-// ── Scan Assessment (updated) ──────────────────────────────────────────
+// ── Full ML Analysis Result (combined endpoint) ────────────────────────
+
+export type MLFullAnalysisResult = {
+  success: boolean;
+  analyses_run: string[];
+  // From side image
+  dimension_weight?: MLDimensionWeightResult;
+  dimension_weight_error?: string;
+  // Skin disease (side image)
+  skin_disease?: MLSkinDiseaseResult;
+  // Age prediction (teeth image, optional)
+  age_prediction?: MLAgeResult;
+  age_prediction_error?: string;
+};
+
+// Legacy single-endpoint type (kept for backward compat)
+export type MLAnalysisResult = MLDimensionWeightResult & {
+  success: boolean;
+};
+
+// ── Scan Assessment ────────────────────────────────────────────────────
 
 export type ScanAssessment = {
   id: string;
   createdAt: string; // ISO
-  images: Record<Angle, string>; // object URLs or base64
+  images: Partial<Record<Angle, string>>; // not all angles required
   prediction: {
     species: "cow" | "goat" | "sheep" | "lamb";
-    ageEligibility: "9" | "11" | "13";
+    ageMonths?: number;           // from teeth ML (or mock)
+    ageEligibility: string;       // display string, e.g. "18" or "~18"
     weightKg: number;
     gender: "male" | "female";
     healthRisk: "Low" | "Medium" | "High";
-    healthRiskExplanation?: string; // Optional explanation for health risk
-    fairPriceIdrRange: { min: number; max: number }; // e.g., 800000–900000
+    healthRiskExplanation?: string;
+    fairPriceIdrRange: { min: number; max: number };
   };
   confidence: Confidence;
   // ML pipeline data (present when real ML analysis is used)
-  mlAnalysis?: MLAnalysisResult;
+  mlAnalysis?: MLDimensionWeightResult;
+  skinDisease?: MLSkinDiseaseResult;
+  agePrediction?: MLAgeResult;
+  analysesRun?: string[];
 };
 
 export type MarketplaceListing = {

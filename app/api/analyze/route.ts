@@ -2,25 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ML_API_URL = process.env.ML_API_URL || "http://localhost:8000";
 
+/**
+ * POST /api/analyze
+ *
+ * Proxies to the ML backend's /analyze/full endpoint.
+ * Accepts multipart form data with:
+ *   - side_image (required)
+ *   - teeth_image (optional)
+ *   - breed (optional, default "generic")
+ */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const image = formData.get("image") as File | null;
+    const sideImage = formData.get("side_image") as File | null;
+    const teethImage = formData.get("teeth_image") as File | null;
     const breed = (formData.get("breed") as string) || "generic";
 
-    if (!image) {
+    if (!sideImage) {
       return NextResponse.json(
-        { error: "No image provided" },
+        { error: "Side image is required" },
         { status: 400 }
       );
     }
 
-    // Forward to ML API
+    // Build form data for ML backend
     const mlFormData = new FormData();
-    mlFormData.append("image", image);
+    mlFormData.append("side_image", sideImage);
     mlFormData.append("breed", breed);
 
-    const response = await fetch(`${ML_API_URL}/analyze`, {
+    if (teethImage) {
+      mlFormData.append("teeth_image", teethImage);
+    }
+
+    const response = await fetch(`${ML_API_URL}/analyze/full`, {
       method: "POST",
       body: mlFormData,
     });
