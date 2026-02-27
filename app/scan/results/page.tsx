@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { VerifiedBadge, ConfidenceBadge } from "@/components/Badges";
+import { useAuth } from "@/components/AuthContext";
 import { ScanAssessment, Angle } from "@/lib/types";
 import { store } from "@/lib/store";
 import { formatIdrRange, formatConfidence, formatDate } from "@/lib/utils";
@@ -61,9 +62,14 @@ const SEVERITY_COLOURS: Record<string, string> = {
 function ScanResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
   const [assessment, setAssessment] = useState<ScanAssessment | null>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/scan/results");
+      return;
+    }
     const id = searchParams.get("id");
     if (id) {
       const found = store.getScanAssessment(id);
@@ -76,7 +82,19 @@ function ScanResultsContent() {
       const latest = store.getLatestScanAssessment();
       if (latest) setAssessment(latest);
     }
-  }, [searchParams]);
+  }, [isAuthenticated, router, searchParams]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        <TopNav />
+        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+          <p className="text-gray-600">Redirecting to login…</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (!assessment) {
     return (

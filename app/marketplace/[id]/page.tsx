@@ -4,23 +4,50 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { TopNav, BottomNav } from "@/components/Navigation";
-import { VerifiedBadge, NotVerifiedBadge, ConfidenceBadge } from "@/components/Badges";
+import {
+  VerifiedBadge,
+  NotVerifiedBadge,
+  ConfidenceBadge,
+} from "@/components/Badges";
+import { useAuth } from "@/components/AuthContext";
 import { MarketplaceListing } from "@/lib/types";
 import { store } from "@/lib/store";
-import { formatIdr, formatIdrRange, formatConfidence, formatDate } from "@/lib/utils";
+import {
+  formatIdr,
+  formatIdrRange,
+  formatConfidence,
+  formatDate,
+} from "@/lib/utils";
 
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/marketplace");
+      return;
+    }
     const id = params.id as string;
     const found = store.getMarketplaceListing(id);
     if (found) {
       setListing(found);
     }
-  }, [params]);
+  }, [isAuthenticated, params, router]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        <TopNav />
+        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+          <p className="text-gray-600">Redirecting to login…</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (!listing) {
     return (

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { useAuth } from "@/components/AuthContext";
 import { VerifiedBadge, NotVerifiedBadge } from "@/components/Badges";
@@ -13,6 +14,7 @@ type FilterType = "all" | "verified" | "not-verified";
 type SpeciesFilter = "all" | "cow" | "goat" | "sheep" | "lamb";
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [listings] = useState<MarketplaceListing[]>(
     store.getMarketplaceListings()
@@ -21,6 +23,12 @@ export default function MarketplacePage() {
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesFilter>("all");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/marketplace");
+    }
+  }, [isAuthenticated, router]);
 
   const filteredListings = useMemo(() => {
     return listings.filter((listing) => {
@@ -41,6 +49,18 @@ export default function MarketplacePage() {
       return true;
     });
   }, [listings, filterType, speciesFilter, priceMin, priceMax]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        <TopNav />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <p className="text-center text-gray-600">Redirecting to login…</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

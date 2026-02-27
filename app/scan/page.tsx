@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNav, BottomNav } from "@/components/Navigation";
+import { useAuth } from "@/components/AuthContext";
 import { Angle } from "@/lib/types";
-import { generateMockAssessment } from "@/lib/mockAssessment";
-import { analyzeWithML, dataURLtoFile, buildAssessmentFromML } from "@/lib/mlAnalysis";
+import {
+  generateMockAssessment,
+} from "@/lib/mockAssessment";
+import {
+  analyzeWithML,
+  dataURLtoFile,
+  buildAssessmentFromML,
+} from "@/lib/mlAnalysis";
 import { store } from "@/lib/store";
 
 // ─── Capture slots in priority order ────────────────────────────────────
@@ -67,6 +74,7 @@ const CAPTURE_SLOTS: CaptureSlot[] = [
 
 export default function ScanPage() {
   const router = useRouter();
+  const { isAuthenticated, credits, consumeCredit } = useAuth();
   const [images, setImages] = useState<Partial<Record<Angle, string>>>({});
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -76,11 +84,20 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string>("");
+  const [showCreditConfirm, setShowCreditConfirm] = useState(false);
 
   const currentSlot = CAPTURE_SLOTS[activeSlot];
   const hasSideImage = !!images.side;
   const hasTeethImage = !!images.teeth;
   const capturedCount = Object.keys(images).length;
+
+  // ── Auth guard ──────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/scan");
+    }
+  }, [isAuthenticated, router]);
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -153,7 +170,7 @@ export default function ScanPage() {
 
   // ── Analyse ─────────────────────────────────────────────────────────
 
-  const handleAnalyze = async () => {
+  const performAnalysis = async () => {
     if (!hasSideImage) {
       alert("A side view image is required to run the analysis.");
       return;
@@ -201,6 +218,40 @@ export default function ScanPage() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAnalyzeClick = () => {
+    if (!hasSideImage) {
+      return;
+    }
+    if (credits < 1) {
+      if (
+        confirm(
+          "You do not have enough credits to run a scan. Go to the credits page to purchase more?"
+        )
+      ) {
+        router.push("/credits");
+      }
+      return;
+    }
+    setShowCreditConfirm(true);
+  };
+
+  const handleConfirmUseCredit = async () => {
+    if (!hasSideImage) {
+      setShowCreditConfirm(false);
+      alert("A side view image is required to run the analysis.");
+      return;
+    }
+    const ok = consumeCredit();
+    if (!ok) {
+      setShowCreditConfirm(false);
+      alert("You do not have enough credits to run a scan.");
+      router.push("/credits");
+      return;
+    }
+    setShowCreditConfirm(false);
+    await performAnalysis();
   };
 
   // ── What will run indicator ─────────────────────────────────────────
@@ -532,7 +583,7 @@ export default function ScanPage() {
           )}
 
           <button
-            onClick={handleAnalyze}
+            onClick={handleAnalyzeClick}
             disabled={!hasSideImage || isAnalyzing}
             className={`w-full px-6 py-4 rounded-lg font-semibold text-lg ${
               hasSideImage && !isAnalyzing
@@ -565,6 +616,37 @@ export default function ScanPage() {
           )}
         </div>
       </div>
+      {showCreditConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Use 1 credit for this scan?
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Each scan costs <span className="font-semibold">1 credit</span>.
+              You currently have{" "}
+              <span className="font-semibold">{credits}</span> credits.
+            </p>
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowCreditConfirm(false)}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmUseCredit}
+                disabled={isAnalyzing}
+                className="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-60"
+              >
+                {isAnalyzing ? "Scanning…" : "Confirm & Scan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
       <div className="h-20 md:hidden" />
