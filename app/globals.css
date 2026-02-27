@@ -3,19 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
+  --foreground-rgb: 12, 18, 9;
+  --background-start-rgb: 243, 250, 246;
   --background-end-rgb: 255, 255, 255;
+  --card: rgba(255, 255, 255, 0.9);
+  --glass: rgba(255, 255, 255, 0.75);
+  color-scheme: light;
+}
+
+* {
+  scroll-behavior: smooth;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
+  background: radial-gradient(circle at 20% 20%, #e0f7ea 0%, transparent 35%),
+    radial-gradient(circle at 80% 0%, #f1f5ff 0%, transparent 30%),
+    linear-gradient(
+      180deg,
+      rgb(var(--background-start-rgb)),
       rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    );
+  min-height: 100vh;
+}
+
+@layer components {
+  .card {
+    @apply bg-white/80 border border-gray-100 rounded-2xl shadow-lg shadow-primary-500/5 backdrop-blur;
+  }
+
+  .pill {
+    @apply inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border border-primary-100 text-primary-700 bg-primary-50;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white bg-primary-600 hover:bg-primary-700 transition shadow-lg shadow-primary-500/20 active:translate-y-[1px];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 transition;
+  }
 }
 
 @layer utilities {

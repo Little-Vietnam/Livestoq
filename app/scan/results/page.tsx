@@ -68,25 +68,19 @@ function ScanResultsContent() {
     <div className="min-h-screen bg-white">
       <TopNav />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Scan Summary
-          </h1>
-          <p className="text-gray-600">
-            Scanned on {formatDate(createdAt)}
-          </p>
+        <div className="card p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Scan Summary</h1>
+          <p className="text-gray-600">Scanned on {formatDate(createdAt)}</p>
         </div>
 
         {/* Images Grid */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Captured Images
-          </h2>
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Captured Images</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {ANGLES.map((angle) => (
-              <div key={angle.key} className="bg-gray-50 rounded-lg overflow-hidden">
+              <div key={angle.key} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
                 <img
                   src={images[angle.key]}
                   alt={angle.label}
@@ -101,7 +95,7 @@ function ScanResultsContent() {
         </div>
 
         {/* AI Assessment Card */}
-        <div className="bg-white border-2 border-primary-200 rounded-lg p-6 mb-8">
+        <div className="card border-primary-100 border p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">AI Assessment</h2>
             <VerifiedBadge />

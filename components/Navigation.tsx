@@ -15,11 +15,18 @@ export function TopNav() {
     router.push("/");
   };
 
+  const linkClass = (path: string) =>
+    `px-4 py-2 rounded-full text-sm font-semibold transition ${
+      pathname === path
+        ? "bg-primary-600 text-white shadow-lg shadow-primary-500/30"
+        : "text-gray-700 hover:bg-white/70 border border-transparent hover:border-primary-100"
+    }`;
+
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <nav className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-white/40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center space-x-2">
             <Image
               src="/logo.png"
               alt="Livestoq"
@@ -28,61 +35,43 @@ export function TopNav() {
               className="h-10 w-auto"
               priority
             />
+            <span className="hidden sm:inline text-sm font-semibold text-primary-700 tracking-wide">
+              Livestoq
+            </span>
           </Link>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/scan"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                pathname === "/scan"
-                  ? "bg-primary-100 text-primary-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
+          <div className="flex items-center space-x-3">
+            <Link href="/scan" className={linkClass("/scan")}>
               Scan
             </Link>
-            <Link
-              href="/marketplace"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                pathname === "/marketplace"
-                  ? "bg-primary-100 text-primary-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
+            <Link href="/marketplace" className={linkClass("/marketplace")}>
               Marketplace
             </Link>
-            <Link
-              href="/ask"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                pathname === "/ask"
-                  ? "bg-primary-100 text-primary-700"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
+            <Link href="/ask" className={linkClass("/ask")}>
               Ask
             </Link>
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-700 hidden sm:inline">
+              <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
+                <span className="text-sm text-gray-700 hidden sm:inline font-semibold">
                   {user?.username}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="px-3 py-2 rounded-full text-sm font-semibold text-gray-700 hover:bg-white/70 border border-gray-200"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 pl-3 border-l border-gray-200">
                 <Link
                   href="/login"
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="px-4 py-2 rounded-full text-sm font-semibold text-gray-700 hover:bg-white/70 border border-gray-200"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-primary-600 text-white hover:bg-primary-700"
+                  className="px-4 py-2 rounded-full text-sm font-semibold bg-primary-600 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700"
                 >
                   Sign Up
                 </Link>
@@ -107,7 +96,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-gray-200 shadow-lg md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur bg-white/85 border-t border-white/60 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.2)] md:hidden">
       <div className={`grid ${isAuthenticated ? "grid-cols-4" : "grid-cols-3"} h-20`}>
         <Link
           href="/"

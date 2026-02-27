@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { Angle } from "@/lib/types";
@@ -20,16 +20,21 @@ export default function ScanPage() {
   const [images, setImages] = useState<Partial<Record<Angle, string>>>({});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string>("");
+
+  const setImageData = (angle: Angle, base64String: string) => {
+    setImages((prev) => ({ ...prev, [angle]: base64String }));
+    if (currentStep < ANGLES.length - 1) {
+      setTimeout(() => setCurrentStep(currentStep + 1), 250);
+    }
+  };
 
   const handleImageCapture = (angle: Angle, file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setImages((prev) => ({ ...prev, [angle]: base64String }));
-      // Auto-advance to next step if not the last one
-      if (currentStep < ANGLES.length - 1) {
-        setTimeout(() => setCurrentStep(currentStep + 1), 300);
-      }
+      setImageData(angle, reader.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -62,6 +67,48 @@ export default function ScanPage() {
     // Navigate to results
     router.push(`/scan/results?id=${assessment.id}`);
   };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraStream(stream);
+      setCameraError("");
+    } catch (error) {
+      setCameraError("Camera unavailable. Please allow access or use upload instead.");
+    }
+  };
+
+  const stopCamera = () => {
+    cameraStream?.getTracks().forEach((track) => track.stop());
+    setCameraStream(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const captureFromCamera = () => {
+    const video = videoRef.current;
+    if (!video || !cameraStream) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1080;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    setImageData(currentAngle.key, dataUrl);
+  };
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   const allImagesCaptured = Object.keys(images).length === 5;
   const currentAngle = ANGLES[currentStep];
@@ -105,7 +152,7 @@ export default function ScanPage() {
         </div>
 
         {/* Current Step Content */}
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+        <div className="card p-6 mb-6">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">{currentAngle.icon}</div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">
@@ -114,7 +161,9 @@ export default function ScanPage() {
             <p className="text-gray-600">
               {images[currentAngle.key]
                 ? "Image captured successfully"
-                : "Take a photo or upload from gallery"}
+                : cameraStream
+                ? "Use the live camera or upload"
+                : "Start the camera or upload from gallery"}
             </p>
           </div>
 
@@ -125,42 +174,105 @@ export default function ScanPage() {
                 alt={currentAngle.label}
                 className="w-full h-64 object-cover rounded-lg"
               />
-              <button
-                onClick={() => {
-                  const newImages = { ...images };
-                  delete newImages[currentAngle.key];
-                  setImages(newImages);
-                }}
-                className="mt-2 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                Retake
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <button
+                  onClick={() => {
+                    const newImages = { ...images };
+                    delete newImages[currentAngle.key];
+                    setImages(newImages);
+                  }}
+                  className="px-4 py-3 rounded-lg font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200"
+                >
+                  Retake
+                </button>
+                <button
+                  onClick={() => setCurrentStep(Math.min(currentStep + 1, ANGLES.length - 1))}
+                  className="px-4 py-3 rounded-lg font-semibold text-white bg-primary-600 hover:bg-primary-700"
+                >
+                  Next angle
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => handleFileInput(currentAngle.key, e)}
-                  className="hidden"
-                />
-                <div className="w-full px-6 py-4 bg-primary-600 text-white rounded-lg text-center font-semibold cursor-pointer hover:bg-primary-700">
-                  📷 Take Photo
+            <div className="space-y-4">
+              <div className="rounded-xl border border-primary-100 bg-primary-50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Live camera</p>
+                    <p className="text-xs text-gray-600">Use your device camera for faster capture</p>
+                  </div>
+                  {cameraStream ? (
+                    <button
+                      onClick={stopCamera}
+                      className="text-sm font-semibold text-red-600 hover:text-red-700"
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      onClick={startCamera}
+                      className="text-sm font-semibold text-primary-700 hover:text-primary-800"
+                    >
+                      Start
+                    </button>
+                  )}
                 </div>
-              </label>
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileInput(currentAngle.key, e)}
-                  className="hidden"
-                />
-                <div className="w-full px-6 py-4 bg-white text-primary-600 rounded-lg text-center font-semibold border-2 border-primary-600 cursor-pointer hover:bg-primary-50">
-                  📁 Upload from Gallery
+
+                {cameraError && (
+                  <p className="text-sm text-red-600 mb-2">{cameraError}</p>
+                )}
+
+                <div className="relative overflow-hidden rounded-xl border border-primary-100 bg-white">
+                  {cameraStream ? (
+                    <div className="relative">
+                      <video ref={videoRef} className="w-full rounded-xl" autoPlay playsInline muted />
+                      <div className="absolute inset-0 pointer-events-none border-2 border-primary-200 rounded-xl" />
+                    </div>
+                  ) : (
+                    <div className="h-48 flex items-center justify-center text-gray-500 text-sm">
+                      Camera preview will appear here
+                    </div>
+                  )}
                 </div>
-              </label>
+
+                <button
+                  onClick={captureFromCamera}
+                  disabled={!cameraStream}
+                  className={`w-full px-6 py-3 rounded-lg font-semibold ${
+                    cameraStream
+                      ? "bg-primary-600 text-white hover:bg-primary-700"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {cameraStream ? "Capture from camera" : "Start camera to capture"}
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => handleFileInput(currentAngle.key, e)}
+                    className="hidden"
+                  />
+                  <div className="w-full px-6 py-4 bg-white text-primary-700 rounded-lg text-center font-semibold border-2 border-primary-200 cursor-pointer hover:bg-primary-50">
+                    📷 Take Photo (system prompt)
+                  </div>
+                </label>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileInput(currentAngle.key, e)}
+                    className="hidden"
+                  />
+                  <div className="w-full px-6 py-4 bg-white text-gray-800 rounded-lg text-center font-semibold border-2 border-gray-200 cursor-pointer hover:bg-gray-50">
+                    📁 Upload from gallery
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 

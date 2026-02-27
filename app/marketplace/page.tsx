@@ -67,7 +67,7 @@ export default function MarketplacePage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-4">
+        <div className="card p-5 mb-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Verification Filter */}
             <div>
@@ -173,7 +173,7 @@ export default function MarketplacePage() {
               <Link
                 key={listing.id}
                 href={`/marketplace/${listing.id}`}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                className="card hover:shadow-xl transition-shadow border border-gray-100"
               >
                 <div className="aspect-video bg-gray-100 relative">
                   <img

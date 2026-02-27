@@ -56,7 +56,7 @@ export default function SignupPage() {
       <TopNav />
 
       <div className="max-w-md mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="card p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
               <svg
@@ -134,7 +134,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Creating account..." : "Sign Up"}
             </button>
