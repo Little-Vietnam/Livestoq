@@ -18,6 +18,26 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'www.woldswildlife.co.uk',
       },
+      {
+        protocol: 'https',
+        hostname: 'media.4-paws.org',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.twinkl.co.uk',
+      },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+      },
     ],
   },
 };
