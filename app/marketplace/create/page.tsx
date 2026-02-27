@@ -116,25 +116,25 @@ function CreateListingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <TopNav />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <Link
           href="/marketplace"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="inline-flex items-center text-slate-300 hover:text-slate-100"
         >
           ← Back to Marketplace
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="text-3xl font-bold text-slate-50">
           Create New Listing
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 glass-panel p-6 sm:p-8">
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Listing Image *
             </label>
             {imagePreview ? (
@@ -142,7 +142,7 @@ function CreateListingContent() {
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-full h-64 object-cover rounded-lg"
+                  className="w-full h-64 object-cover rounded-2xl border border-white/10 shadow-[0_20px_65px_rgba(15,23,42,0.9)]"
                 />
                 <button
                   type="button"
@@ -150,7 +150,7 @@ function CreateListingContent() {
                     setImagePreview("");
                     setFormData((prev) => ({ ...prev, imageUrl: "" }));
                   }}
-                  className="mt-2 text-sm text-red-600 hover:text-red-700"
+                  className="mt-2 text-sm text-red-300 hover:text-red-200"
                 >
                   Remove image
                 </button>
@@ -163,22 +163,22 @@ function CreateListingContent() {
                   onChange={handleImageUpload}
                   className="hidden"
                 />
-                <div className="w-full px-6 py-12 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50">
-                  <p className="text-gray-600">Click to upload image</p>
-                  <p className="text-sm text-gray-500 mt-1">
+                <div className="w-full px-6 py-12 border-2 border-dashed border-white/20 rounded-2xl text-center cursor-pointer hover:border-emerald-300/60 hover:bg-slate-900/60">
+                  <p className="text-slate-200">Click to upload image</p>
+                  <p className="text-sm text-slate-400 mt-1">
                     or drag and drop
                   </p>
                 </div>
               </label>
             )}
             {errors.imageUrl && (
-              <p className="mt-1 text-sm text-red-600">{errors.imageUrl}</p>
+              <p className="mt-1 text-sm text-red-300">{errors.imageUrl}</p>
             )}
           </div>
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Title *
             </label>
             <input
@@ -188,16 +188,16 @@ function CreateListingContent() {
                 setFormData((prev) => ({ ...prev, title: e.target.value }))
               }
               placeholder="e.g., Bali Cow • Healthy • Ready"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-4 py-2 glass-input"
             />
             {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+              <p className="mt-1 text-sm text-red-300">{errors.title}</p>
             )}
           </div>
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Location *
             </label>
             <input
@@ -207,16 +207,16 @@ function CreateListingContent() {
                 setFormData((prev) => ({ ...prev, location: e.target.value }))
               }
               placeholder="e.g., Jakarta Selatan, DKI Jakarta"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-4 py-2 glass-input"
             />
             {errors.location && (
-              <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+              <p className="mt-1 text-sm text-red-300">{errors.location}</p>
             )}
           </div>
 
           {/* Seller Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Seller Name *
             </label>
             <input
@@ -229,16 +229,16 @@ function CreateListingContent() {
                 }))
               }
               placeholder="Your name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-4 py-2 glass-input"
             />
             {errors.sellerName && (
-              <p className="mt-1 text-sm text-red-600">{errors.sellerName}</p>
+              <p className="mt-1 text-sm text-red-300">{errors.sellerName}</p>
             )}
           </div>
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Price (IDR) *
             </label>
             <input
@@ -249,23 +249,23 @@ function CreateListingContent() {
               }
               placeholder="15000000"
               min="0"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-4 py-2 glass-input"
             />
             {formData.priceIdr && !errors.priceIdr && (
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-slate-300">
                 {formatIdr(parseInt(formData.priceIdr))}
               </p>
             )}
             {errors.priceIdr && (
-              <p className="mt-1 text-sm text-red-600">{errors.priceIdr}</p>
+              <p className="mt-1 text-sm text-red-300">{errors.priceIdr}</p>
             )}
           </div>
 
           {/* AI Verification Toggle */}
           {scanAssessment && (
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <div className="bg-emerald-400/10 border border-emerald-300/40 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-slate-100">
                   Add AI Verification (from scan)
                 </label>
                 <input
@@ -276,7 +276,7 @@ function CreateListingContent() {
                 />
               </div>
               {useScanVerification && (
-                <div className="mt-3 text-sm text-gray-600">
+                <div className="mt-3 text-sm text-slate-100">
                   <p>
                     Species: {scanAssessment.prediction.species} (
                     {Math.round(scanAssessment.confidence.species * 100)}%
@@ -298,13 +298,13 @@ function CreateListingContent() {
           )}
 
           {!scanAssessment && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-3">
+            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-4">
+              <p className="text-sm text-slate-200 mb-3">
                 Want to add AI verification to your listing?
               </p>
               <Link
                 href="/scan"
-                className="inline-block px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 text-sm"
+                className="inline-block px-4 py-2 btn-primary text-sm"
               >
                 Scan this animal
               </Link>
@@ -312,10 +312,10 @@ function CreateListingContent() {
           )}
 
           {/* Submit Button */}
-          <div className="sticky bottom-20 md:relative md:bottom-0 bg-white pt-4 pb-4 md:pb-0 border-t md:border-t-0">
+          <div className="sticky bottom-20 md:relative md:bottom-0 pt-4 pb-1 md:pb-0">
             <button
               type="submit"
-              className="w-full px-6 py-4 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 text-lg"
+              className="w-full px-6 py-4 btn-primary text-lg"
             >
               Publish Listing
             </button>
@@ -333,10 +333,10 @@ export default function CreateListingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen">
           <TopNav />
           <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-slate-300">Loading...</p>
           </div>
           <BottomNav />
         </div>

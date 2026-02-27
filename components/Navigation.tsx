@@ -18,24 +18,26 @@ export function TopNav() {
   const linkClass = (path: string) =>
     `px-4 py-2 rounded-full text-sm font-semibold transition ${
       pathname === path
-        ? "bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-        : "text-gray-700 hover:bg-white/70 border border-transparent hover:border-primary-100"
+        ? "bg-slate-900/80 text-emerald-200 shadow-[0_10px_35px_rgba(16,185,129,0.55)] border border-emerald-300/50"
+        : "text-slate-100/80 hover:text-emerald-200 hover:bg-slate-900/40 border border-transparent hover:border-emerald-300/40"
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-white/40 shadow-sm">
+    <nav className="sticky top-0 z-50 glass-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <Image
-              src="/logo.png"
-              alt="Livestoq"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
-              priority
-            />
-            <span className="hidden sm:inline text-sm font-semibold text-primary-700 tracking-wide">
+            <div className="flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-400/90 shadow-[0_0_35px_rgba(52,211,153,0.9)]">
+              <Image
+                src="/logo.png"
+                alt="Livestoq"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+                priority
+              />
+            </div>
+            <span className="hidden sm:inline text-sm font-semibold text-slate-100 tracking-[0.18em] uppercase">
               Livestoq
             </span>
           </Link>
@@ -50,28 +52,28 @@ export function TopNav() {
               Ask
             </Link>
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-                <span className="text-sm text-gray-700 hidden sm:inline font-semibold">
+              <div className="flex items-center space-x-3 pl-3 border-l border-white/10">
+                <span className="text-sm text-slate-100/90 hidden sm:inline font-semibold">
                   {user?.username}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 rounded-full text-sm font-semibold text-gray-700 hover:bg-white/70 border border-gray-200"
+                  className="px-3 py-2 rounded-full text-sm font-semibold text-slate-100 bg-slate-900/40 border border-white/10 hover:bg-slate-900/70"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 pl-3 border-l border-gray-200">
+              <div className="flex items-center space-x-2 pl-3 border-l border-white/10">
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-full text-sm font-semibold text-gray-700 hover:bg-white/70 border border-gray-200"
+                  className="px-4 py-2 rounded-full text-sm font-semibold text-slate-100 hover:bg-slate-900/70 border border-white/10"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-2 rounded-full text-sm font-semibold bg-primary-600 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700"
+                  className="px-4 py-2 rounded-full text-sm font-semibold text-slate-950 bg-gradient-to-r from-emerald-300 via-sky-300 to-indigo-300 shadow-[0_12px_40px_rgba(59,130,246,0.6)] hover:from-emerald-200 hover:via-sky-200 hover:to-indigo-200"
                 >
                   Sign Up
                 </Link>
@@ -96,7 +98,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur bg-white/85 border-t border-white/60 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.2)] md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden">
       <div className={`grid ${isAuthenticated ? "grid-cols-4" : "grid-cols-3"} h-20`}>
         <Link
           href="/"

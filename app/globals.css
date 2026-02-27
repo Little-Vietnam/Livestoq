@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 12, 18, 9;
-  --background-start-rgb: 243, 250, 246;
-  --background-end-rgb: 255, 255, 255;
-  --card: rgba(255, 255, 255, 0.9);
-  --glass: rgba(255, 255, 255, 0.75);
-  color-scheme: light;
+  --foreground-rgb: 240, 249, 255;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 2, 6, 23;
+  --card: rgba(15, 23, 42, 0.65);
+  --glass: rgba(15, 23, 42, 0.4);
+  color-scheme: dark;
 }
 
 * {
@@ -17,10 +17,12 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: radial-gradient(circle at 20% 20%, #e0f7ea 0%, transparent 35%),
-    radial-gradient(circle at 80% 0%, #f1f5ff 0%, transparent 30%),
+  background:
+    radial-gradient(circle at 0% 0%, rgba(129, 230, 217, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 100% 20%, rgba(129, 140, 248, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 10% 90%, rgba(251, 191, 36, 0.22) 0%, transparent 55%),
     linear-gradient(
-      180deg,
+      145deg,
       rgb(var(--background-start-rgb)),
       rgb(var(--background-end-rgb))
     );
@@ -29,19 +31,31 @@ body {
 
 @layer components {
   .card {
-    @apply bg-white/80 border border-gray-100 rounded-2xl shadow-lg shadow-primary-500/5 backdrop-blur;
+    @apply bg-slate-900/60 border border-white/10 rounded-3xl shadow-[0_18px_60px_rgba(15,23,42,0.65)] backdrop-blur-2xl;
+  }
+
+  .glass-panel {
+    @apply bg-slate-900/40 border border-white/10 rounded-3xl backdrop-blur-2xl shadow-[0_18px_60px_rgba(15,23,42,0.55)];
+  }
+
+  .glass-nav {
+    @apply bg-slate-900/60 border border-white/10 backdrop-blur-2xl shadow-[0_18px_60px_rgba(15,23,42,0.75)];
+  }
+
+  .glass-input {
+    @apply bg-slate-900/50 border border-white/15 rounded-2xl text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-primary-400 focus:border-primary-400/80;
   }
 
   .pill {
-    @apply inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border border-primary-100 text-primary-700 bg-primary-50;
+    @apply inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border border-primary-400/40 text-primary-100 bg-primary-500/20;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white bg-primary-600 hover:bg-primary-700 transition shadow-lg shadow-primary-500/20 active:translate-y-[1px];
+    @apply inline-flex items-center justify-center px-5 py-3 rounded-2xl font-semibold text-slate-950 bg-gradient-to-r from-emerald-300 via-sky-300 to-indigo-300 hover:from-emerald-200 hover:via-sky-200 hover:to-indigo-200 transition shadow-[0_16px_45px_rgba(56,189,248,0.45)] active:translate-y-[1px];
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 transition;
+    @apply inline-flex items-center justify-center px-5 py-3 rounded-2xl font-semibold text-slate-100 bg-slate-900/30 border border-white/10 hover:bg-slate-900/60 transition;
   }
 }
 

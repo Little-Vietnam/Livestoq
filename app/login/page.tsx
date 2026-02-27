@@ -36,15 +36,15 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
+    <div className="min-h-screen">
       <TopNav />
 
       <div className="max-w-md mx-auto px-4 py-12">
-        <div className="card p-8">
+        <div className="glass-panel p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-400/90 rounded-3xl mb-4 shadow-[0_0_40px_rgba(52,211,153,0.9)]">
               <svg
-                className="w-8 h-8 text-primary-600"
+                className="w-8 h-8 text-slate-950"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -57,19 +57,19 @@ function LoginContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to your Livestoq account</p>
+            <h1 className="text-3xl font-bold text-slate-50 mb-2">Welcome Back</h1>
+            <p className="text-slate-300">Sign in to your Livestoq account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-500/15 border border-red-400/60 text-red-100 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-200 mb-2">
                 Username
               </label>
               <input
@@ -77,13 +77,13 @@ function LoginContent() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-3 glass-input"
                 placeholder="Enter your username"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-200 mb-2">
                 Password
               </label>
               <input
@@ -91,7 +91,7 @@ function LoginContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-3 glass-input"
                 placeholder="Enter your password"
               />
             </div>
@@ -106,16 +106,16 @@ function LoginContent() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-300">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-primary-600 hover:text-primary-700 font-semibold">
+              <Link href="/signup" className="text-emerald-300 hover:text-emerald-200 font-semibold">
                 Sign up
               </Link>
             </p>
           </div>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 text-center">
+          <div className="mt-6 p-4 bg-slate-900/60 border border-white/10 rounded-2xl">
+            <p className="text-xs text-slate-300 text-center">
               Demo credentials: Username: <strong>Testing</strong>, Password: <strong>Testing</strong>
             </p>
           </div>
@@ -132,10 +132,10 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen">
           <TopNav />
           <div className="max-w-md mx-auto px-4 py-12 text-center">
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-slate-300">Loading...</p>
           </div>
           <BottomNav />
         </div>
