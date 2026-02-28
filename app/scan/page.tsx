@@ -15,11 +15,9 @@ import {
 } from "@/lib/mlAnalysis";
 import { store } from "@/lib/store";
 
-// ─── Capture slots in priority order ────────────────────────────────────
-// Side is REQUIRED. Head, Back, Teeth are optional.
-// Side   → dimension estimation + skin disease detection
-// Teeth  → age prediction (only runs if teeth captured)
-// Head & Back → supplementary views (not used by ML currently)
+// ─── Capture slots ──────────────────────────────────────────────────────
+// Side is REQUIRED → dimension estimation + skin disease detection
+// Teeth is OPTIONAL → age prediction (only runs if teeth captured)
 
 const BREEDS = [
   "generic", "holstein", "angus", "hereford", "brahman", "jersey",
@@ -45,22 +43,6 @@ const CAPTURE_SLOTS: CaptureSlot[] = [
     required: true,
     description: "Lateral view — used for body dimension estimation and skin disease detection",
     pipelines: ["Dimension & Weight", "Skin Disease"],
-  },
-  {
-    key: "head",
-    label: "Head / Front",
-    icon: "🔲",
-    required: false,
-    description: "Front-facing view for visual reference",
-    pipelines: ["Visual Reference"],
-  },
-  {
-    key: "back",
-    label: "Back / Rear",
-    icon: "🔳",
-    required: false,
-    description: "Rear view for visual reference",
-    pipelines: ["Visual Reference"],
   },
   {
     key: "teeth",
@@ -327,7 +309,7 @@ export default function ScanPage() {
         </div>
 
         {/* ── Capture slot tabs ───────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-2 mb-6">
           {CAPTURE_SLOTS.map((slot, idx) => {
             const captured = !!images[slot.key];
             const isActive = idx === activeSlot;
@@ -518,9 +500,9 @@ export default function ScanPage() {
         {capturedCount > 0 && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Captured ({capturedCount}/4)
+              Captured ({capturedCount}/2)
             </h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {CAPTURE_SLOTS.map((slot) => (
                 <div
                   key={slot.key}

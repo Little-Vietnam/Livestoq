@@ -1,7 +1,7 @@
 // ── Image capture angles ────────────────────────────────────────────────
 
-/** The 4 capture slots in priority order: side (required) → head → back → teeth */
-export type Angle = "side" | "head" | "back" | "teeth";
+/** The 2 capture slots: side (required) → teeth (optional) */
+export type Angle = "side" | "teeth";
 
 export type Confidence = {
   species: number;        // 0.70–0.99

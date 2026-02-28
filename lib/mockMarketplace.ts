@@ -9,15 +9,11 @@ export function getMockMarketplaceListings(): MarketplaceListing[] {
   // Generate mock assessments for verified listings
   const assessment1 = generateMockAssessment({
     side: "https://example.com/images/cow1.jpg",
-    head: "https://example.com/images/cow1.jpg",
-    back: "https://example.com/images/cow1.jpg",
     teeth: "https://example.com/images/cow1.jpg",
   });
 
   const assessment2 = generateMockAssessment({
     side: "https://example.com/images/cow2.jpg",
-    head: "https://example.com/images/cow2.jpg",
-    back: "https://example.com/images/cow2.jpg",
     teeth: "https://example.com/images/cow2.jpg",
   });
 

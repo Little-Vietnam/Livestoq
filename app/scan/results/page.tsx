@@ -14,8 +14,6 @@ import { formatIdrRange, formatConfidence, formatDate } from "@/lib/utils";
 
 const ANGLE_LABELS: Record<Angle, string> = {
   side: "Side View",
-  head: "Head / Front",
-  back: "Back / Rear",
   teeth: "Teeth / Mouth",
 };
 

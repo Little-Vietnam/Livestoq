@@ -9,7 +9,7 @@ export type AuthUser = {
 };
 
 const STORAGE_KEY = "livestoq_user";
-const DEFAULT_STARTING_CREDITS = 100;
+const DEFAULT_STARTING_CREDITS = 25;
 
 let currentUser: AuthUser | null = null;
 
