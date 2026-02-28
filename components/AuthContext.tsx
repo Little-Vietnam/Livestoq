@@ -16,20 +16,36 @@ interface AuthContextType {
   login: (username: string, password: string) => boolean;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
   credits: number;
   addCredits: (amount: number) => void;
   consumeCredit: () => boolean;
+  isDemoMode: boolean;
+  toggleDemoMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const currentUser = auth.getCurrentUser();
     setUser(currentUser);
+    const stored = localStorage.getItem("livestoq_demo_mode");
+    if (stored !== null) setIsDemoMode(stored === "true");
+    setLoading(false);
   }, []);
+
+  const toggleDemoMode = () => {
+    setIsDemoMode((prev) => {
+      const next = !prev;
+      localStorage.setItem("livestoq_demo_mode", String(next));
+      return next;
+    });
+  };
 
   const login = (username: string, password: string): boolean => {
     const success = auth.login(username, password);
@@ -72,9 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         isAuthenticated: user !== null,
+        loading,
         credits: user?.credits ?? 0,
         addCredits,
         consumeCredit,
+        isDemoMode,
+        toggleDemoMode,
       }}
     >
       {children}

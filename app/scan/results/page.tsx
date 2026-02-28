@@ -48,26 +48,20 @@ const DENTITION_LABELS: Record<string, string> = {
   unknown: "Unknown",
 };
 
-const SEVERITY_COLOURS: Record<string, string> = {
-  none: "bg-green-100 text-green-700",
-  mild: "bg-yellow-100 text-yellow-700",
-  moderate: "bg-orange-100 text-orange-700",
-  severe: "bg-red-100 text-red-700",
-};
-
 // ── Component ───────────────────────────────────────────────────────────
 
 function ScanResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [assessment, setAssessment] = useState<ScanAssessment | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/login?redirect=/scan/results");
       return;
     }
+    if (loading) return;
     const id = searchParams.get("id");
     if (id) {
       const found = store.getScanAssessment(id);
@@ -80,14 +74,14 @@ function ScanResultsContent() {
       const latest = store.getLatestScanAssessment();
       if (latest) setAssessment(latest);
     }
-  }, [isAuthenticated, router, searchParams]);
+  }, [isAuthenticated, loading, router, searchParams]);
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-white">
         <TopNav />
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <p className="text-gray-600">Redirecting to login…</p>
+          <p className="text-gray-600">{loading ? "" : "Redirecting to login…"}</p>
         </div>
         <BottomNav />
       </div>
@@ -326,15 +320,15 @@ function ScanResultsContent() {
                 {skinDisease.overall_status === "healthy"
                   ? "✓ Healthy"
                   : skinDisease.overall_status === "suspect"
-                  ? "⚠ Suspect"
+                  ? "~ Suspect"
                   : skinDisease.overall_status === "diseased"
-                  ? "✕ Disease Detected"
+                  ? "~ Attention"
                   : "Unknown"}
               </span>
             </div>
 
-            {/* Skin quality gauge */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+            {/* Skin score gauge */}
+            <div className="mb-4 p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Skin Quality Score</span>
                 <span className="text-2xl font-bold text-gray-900">
@@ -354,42 +348,25 @@ function ScanResultsContent() {
               </div>
             </div>
 
-            {/* Conditions list */}
-            {skinDisease.conditions.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-600">Detected Conditions</p>
-                {skinDisease.conditions.map((condition, i) => (
-                  <div key={i} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{condition.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          SEVERITY_COLOURS[condition.severity] || "bg-gray-100 text-gray-600"
-                        }`}>
-                          {condition.severity}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {Math.round(condition.confidence * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">{condition.description}</p>
-                    {condition.affected_area_pct > 0 && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Affected area: {condition.affected_area_pct.toFixed(1)}%
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-green-600 font-medium">No skin conditions detected</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  The animal's skin appears healthy based on visible analysis.
-                </p>
-              </div>
-            )}
+            {/* Neutral skin interpretation */}
+            <div className="text-center py-3">
+              {skinDisease.skin_quality_score >= 88 ? (
+                <>
+                  <p className="text-green-600 font-semibold">No skin disease indicators detected</p>
+                  <p className="text-sm text-gray-500 mt-1">Coat and skin texture appear within normal range based on visual analysis.</p>
+                </>
+              ) : skinDisease.skin_quality_score >= 82 ? (
+                <>
+                  <p className="text-yellow-600 font-semibold">Minor visual variations noted</p>
+                  <p className="text-sm text-gray-500 mt-1">No significant disease markers detected. A routine veterinary check is a good practice.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-orange-600 font-semibold">Some visual patterns observed</p>
+                  <p className="text-sm text-gray-500 mt-1">The skin analysis flagged some patterns. Consult a veterinarian for a professional assessment.</p>
+                </>
+              )}
+            </div>
           </div>
         )}
 

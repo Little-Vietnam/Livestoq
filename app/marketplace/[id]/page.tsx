@@ -22,27 +22,28 @@ import {
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/login?redirect=/marketplace");
       return;
     }
+    if (loading) return;
     const id = params.id as string;
     const found = store.getMarketplaceListing(id);
     if (found) {
       setListing(found);
     }
-  }, [isAuthenticated, params, router]);
+  }, [isAuthenticated, loading, params, router]);
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-white">
         <TopNav />
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <p className="text-gray-600">Redirecting to login…</p>
+          <p className="text-gray-600">{loading ? "" : "Redirecting to login…"}</p>
         </div>
         <BottomNav />
       </div>

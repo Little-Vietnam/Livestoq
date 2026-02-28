@@ -19,12 +19,6 @@ import { store } from "@/lib/store";
 // Side is REQUIRED → dimension estimation + skin disease detection
 // Teeth is OPTIONAL → age prediction (only runs if teeth captured)
 
-const BREEDS = [
-  "generic", "holstein", "angus", "hereford", "brahman", "jersey",
-  "simmental", "limousin", "charolais", "bali", "ongole", "madura",
-  "peranakan_ongole",
-];
-
 type CaptureSlot = {
   key: Angle;
   label: string;
@@ -41,7 +35,7 @@ const CAPTURE_SLOTS: CaptureSlot[] = [
     label: "Side View",
     icon: "🐄",
     required: true,
-    description: "Lateral view — used for body dimension estimation and skin disease detection",
+    description: "Lateral view: used for body dimension estimation and skin disease detection",
     pipelines: ["Dimension & Weight", "Skin Disease"],
   },
   {
@@ -56,13 +50,17 @@ const CAPTURE_SLOTS: CaptureSlot[] = [
 
 export default function ScanPage() {
   const router = useRouter();
-  const { isAuthenticated, credits, consumeCredit } = useAuth();
+  const { isAuthenticated, loading, credits, consumeCredit, isDemoMode } = useAuth();
   const [images, setImages] = useState<Partial<Record<Angle, string>>>({});
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
-  const [breed, setBreed] = useState<string>("generic");
-  const [useMLPipeline, setUseMLPipeline] = useState(true);
+  const breed = "generic";
+  const useMLPipeline = !isDemoMode;
+
+  const pushLog = (msg: string) => {
+    setAnalysisStatus(msg);
+  };
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string>("");
@@ -76,10 +74,10 @@ export default function ScanPage() {
   // ── Auth guard ──────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/login?redirect=/scan");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading, router]);
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -163,27 +161,43 @@ export default function ScanPage() {
 
     try {
       if (useMLPipeline) {
-        setAnalysisStatus("Preparing images…");
+        pushLog("[Input] Loading images...");
         const sideFile = dataURLtoFile(images.side!, "side.jpg");
         const teethFile = hasTeethImage
           ? dataURLtoFile(images.teeth!, "teeth.jpg")
           : null;
 
-        setAnalysisStatus(
-          hasTeethImage
-            ? "Running dimension, skin disease & age pipelines…"
-            : "Running dimension & skin disease pipelines…"
-        );
+        pushLog("[Stage 1/6] Cow Segmentation...");
+        await new Promise((r) => setTimeout(r, 300));
+        pushLog("[Stage 2/6] Distance Estimation...");
+        await new Promise((r) => setTimeout(r, 200));
+        pushLog("[Stage 3/6] Keypoint Detection...");
+        await new Promise((r) => setTimeout(r, 200));
+        pushLog("[Stage 4/6] Pose Normalization...");
+        await new Promise((r) => setTimeout(r, 200));
+        pushLog("[Stage 5/6] Dimension Extraction...");
+        await new Promise((r) => setTimeout(r, 200));
+        pushLog("[Stage 6/6] Weight Prediction...");
+        await new Promise((r) => setTimeout(r, 200));
+        pushLog("[Skin] Disease Detection...");
+        if (hasTeethImage) {
+          await new Promise((r) => setTimeout(r, 200));
+          pushLog("[Teeth] Age Estimation...");
+        }
 
         const mlResult = await analyzeWithML(sideFile, teethFile, breed);
 
-        setAnalysisStatus("Building assessment…");
+        pushLog("Building assessment report...");
         const assessment = buildAssessmentFromML(mlResult, images);
         store.addScanAssessment(assessment);
         router.push(`/scan/results?id=${assessment.id}`);
       } else {
-        setAnalysisStatus("Running demo analysis…");
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        pushLog("Starting demo analysis…");
+        await new Promise((r) => setTimeout(r, 400));
+        pushLog("Generating simulated measurements…");
+        await new Promise((r) => setTimeout(r, 600));
+        pushLog("Building demo assessment…");
+        await new Promise((r) => setTimeout(r, 400));
         const assessment = generateMockAssessment(images);
         store.addScanAssessment(assessment);
         router.push(`/scan/results?id=${assessment.id}`);
@@ -251,62 +265,21 @@ export default function ScanPage() {
     <div className="min-h-screen bg-white">
       <TopNav />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-          Scan Livestock
-        </h1>
-        <p className="text-center text-gray-500 text-sm mb-8">
-          Capture images for AI analysis — only a side view is required
-        </p>
-
-        {/* ── ML Settings ─────────────────────────────────────────── */}
-        <div className="card p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-700">AI Analysis Mode</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                useMLPipeline
-                  ? "bg-green-100 text-green-700"
-                  : "bg-yellow-100 text-yellow-700"
-              }`}>
-                {useMLPipeline ? "ML Pipeline" : "Demo Mode"}
-              </span>
-            </div>
-            <button
-              onClick={() => setUseMLPipeline(!useMLPipeline)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                useMLPipeline ? "bg-primary-600" : "bg-gray-300"
-              }`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                useMLPipeline ? "translate-x-6" : "translate-x-1"
-              }`} />
-            </button>
-          </div>
-
-          {useMLPipeline ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Breed (for weight correction)
-              </label>
-              <select
-                value={breed}
-                onChange={(e) => setBreed(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                {BREEDS.map((b) => (
-                  <option key={b} value={b}>
-                    {b.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <p className="text-xs text-yellow-600">
-              Demo mode uses simulated data. Enable ML Pipeline for real analysis.
-            </p>
-          )}
+      {/* Hero-style header */}
+      <section className="px-4 py-6 sm:py-8 bg-gradient-to-b from-primary-50 to-white">
+        <div className="max-w-2xl mx-auto text-center space-y-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900" style={{ fontFamily: "serif" }}>
+            Scan Livestock
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600">
+            Capture images for AI analysis — only a side view is required
+          </p>
         </div>
+      </section>
+
+      <div className="max-w-2xl mx-auto px-4 py-6">
+
+
 
         {/* ── Capture slot tabs ───────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-2 mb-6">
@@ -337,9 +310,7 @@ export default function ScanPage() {
                     <span className="text-white text-[8px] font-bold">✓</span>
                   </span>
                 )}
-                {slot.required && !captured && (
-                  <span className="absolute top-1 right-1 w-3 h-3 bg-red-400 rounded-full" title="Required" />
-                )}
+
               </button>
             );
           })}
@@ -352,7 +323,7 @@ export default function ScanPage() {
             <div className="inline-flex items-center gap-2 mb-2">
               <span className="text-4xl">{currentSlot.icon}</span>
               <div className="text-left">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-serif font-semibold text-gray-900">
                   {currentSlot.label}
                   {currentSlot.required && (
                     <span className="ml-2 text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
@@ -446,32 +417,18 @@ export default function ScanPage() {
                 </button>
               </div>
 
-              {/* Upload buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={(e) => handleFileInput(currentSlot.key, e)}
-                    className="hidden"
-                  />
-                  <div className="w-full px-4 py-4 bg-white text-primary-700 rounded-lg text-center font-semibold border-2 border-primary-200 cursor-pointer hover:bg-primary-50 text-sm">
-                    📷 Take Photo
-                  </div>
-                </label>
-                <label className="block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileInput(currentSlot.key, e)}
-                    className="hidden"
-                  />
-                  <div className="w-full px-4 py-4 bg-white text-gray-700 rounded-lg text-center font-semibold border-2 border-gray-200 cursor-pointer hover:bg-gray-50 text-sm">
-                    📁 Upload
-                  </div>
-                </label>
-              </div>
+              {/* Upload button */}
+              <label className="block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileInput(currentSlot.key, e)}
+                  className="hidden"
+                />
+                <div className="w-full px-4 py-4 bg-white text-gray-700 rounded-lg text-center font-semibold border-2 border-gray-200 cursor-pointer hover:bg-gray-50 text-sm">
+                  📁 Upload from Gallery
+                </div>
+              </label>
             </div>
           )}
 
@@ -555,12 +512,15 @@ export default function ScanPage() {
 
         {/* ── Analyse button (sticky on mobile) ──────────────────── */}
         <div className="sticky bottom-20 md:relative md:bottom-0 bg-white pt-4 pb-4 md:pb-0 border-t md:border-t-0">
-          {analysisStatus && isAnalyzing && (
-            <div className="mb-3 p-3 bg-primary-50 border border-primary-100 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
-                <p className="text-sm text-primary-700 font-medium">{analysisStatus}</p>
-              </div>
+          {isAnalyzing && analysisStatus && (
+            <div className="mb-3 flex items-center gap-2.5 px-3 py-2 bg-gray-950 rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+              <span
+                key={analysisStatus}
+                className="status-tick text-xs font-mono text-green-300 truncate"
+              >
+                {analysisStatus}
+              </span>
             </div>
           )}
 
@@ -585,7 +545,7 @@ export default function ScanPage() {
               "Capture side view to analyze"
             ) : (
               <span className="flex items-center justify-center gap-2">
-                {useMLPipeline && "🧠 "}Analyze{useMLPipeline ? " with ML" : ""}
+                Analyze{useMLPipeline ? " with ML" : ""}
                 {hasTeethImage && " (+ Age)"}
               </span>
             )}

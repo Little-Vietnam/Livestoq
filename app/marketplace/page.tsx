@@ -15,7 +15,7 @@ type SpeciesFilter = "all" | "cow" | "goat" | "sheep" | "lamb";
 
 export default function MarketplacePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [listings] = useState<MarketplaceListing[]>(
     store.getMarketplaceListings()
   );
@@ -25,10 +25,10 @@ export default function MarketplacePage() {
   const [priceMax, setPriceMax] = useState<string>("");
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/login?redirect=/marketplace");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading, router]);
 
   const filteredListings = useMemo(() => {
     return listings.filter((listing) => {
@@ -50,12 +50,12 @@ export default function MarketplacePage() {
     });
   }, [listings, filterType, speciesFilter, priceMin, priceMax]);
 
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-white">
         <TopNav />
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <p className="text-center text-gray-600">Redirecting to login…</p>
+          <p className="text-center text-gray-600">{loading ? "" : "Redirecting to login…"}</p>
         </div>
         <BottomNav />
       </div>

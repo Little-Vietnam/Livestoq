@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { useAuth } from "@/components/AuthContext";
 import Link from "next/link";
@@ -34,6 +35,7 @@ const SUGGESTED_QUESTIONS = [
 
 export default function AskPage() {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -222,53 +224,14 @@ export default function AskPage() {
     }
   };
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-white">
-        <TopNav />
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-              <svg
-                className="w-8 h-8 text-primary-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Authentication Required
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Please sign in to access Stoqy AI, your Personal Voice Assistant.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Link
-                href="/login"
-                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold border-2 border-primary-600 hover:bg-primary-50"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </div>
-        <BottomNav />
-        <div className="h-20 md:hidden" />
-      </div>
-    );
+    return null;
   }
 
   return (

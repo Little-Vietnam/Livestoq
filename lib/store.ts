@@ -26,6 +26,10 @@ export const store = {
     return scanAssessments[scanAssessments.length - 1];
   },
 
+  getAllScanAssessments(): ScanAssessment[] {
+    return [...scanAssessments].reverse();
+  },
+
   // Marketplace listings
   getMarketplaceListings(): MarketplaceListing[] {
     return marketplaceListings;

@@ -4,15 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./AuthContext";
+import { store } from "@/lib/store";
+import type { ScanAssessment } from "@/lib/types";
 
 import { useState, useRef, useEffect } from "react";
 
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, user, credits, logout } = useAuth();
+  const { isAuthenticated, user, credits, logout, isDemoMode, toggleDemoMode } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
+  const desktopDropdownRef = useRef<HTMLDivElement>(null);
+  const [scanHistory, setScanHistory] = useState<ScanAssessment[]>([]);
 
   const handleLogout = () => {
     logout();
@@ -27,9 +32,16 @@ export function TopNav() {
         : "text-gray-700 hover:bg-white/70 border border-transparent hover:border-primary-100"
     }`;
 
+  // Load scan history when any dropdown opens
+  useEffect(() => {
+    if (dropdownOpen || desktopDropdownOpen) {
+      setScanHistory(store.getAllScanAssessments().slice(0, 3));
+    }
+  }, [dropdownOpen, desktopDropdownOpen]);
+
   // Handle clicking outside for mobile dropdown
   useEffect(() => {
-    if (!dropdownOpen) return;
+    if (!dropdownOpen && !desktopDropdownOpen) return;
     function handleClick(e: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -37,10 +49,16 @@ export function TopNav() {
       ) {
         setDropdownOpen(false);
       }
+      if (
+        desktopDropdownRef.current &&
+        !desktopDropdownRef.current.contains(e.target as Node)
+      ) {
+        setDesktopDropdownOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [dropdownOpen]);
+  }, [dropdownOpen, desktopDropdownOpen]);
 
   return (
     <nav className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-white/40 shadow-sm">
@@ -67,33 +85,113 @@ export function TopNav() {
             <Link href="/ask" className={linkClass("/ask")}>
               Ask
             </Link>
-            {isAuthenticated && (
-              <div className="flex items-center space-x-2 pl-3 border-l border-gray-200 mr-2">
-                <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-primary-50 border border-primary-100">
-                  <span className="text-xs font-medium text-primary-700">
-                    Credits: <span className="font-semibold">{credits}</span>
-                  </span>
-                  <Link
-                    href="/credits"
-                    className="ml-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-sm hover:bg-primary-700"
-                    aria-label="Buy credits"
-                  >
-                    +
-                  </Link>
-                </div>
-              </div>
-            )}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-                <span className="text-sm text-gray-700 hidden sm:inline font-semibold">
-                  {user?.username}
-                </span>
+              <div className="relative" ref={desktopDropdownRef}>
                 <button
-                  onClick={handleLogout}
-                  className="px-3 py-2 rounded-full text-sm font-semibold text-gray-700 hover:bg-white/70 border border-gray-200"
+                  aria-label="Open profile menu"
+                  onClick={() => setDesktopDropdownOpen((o) => !o)}
+                  className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400 transition"
                 >
-                  Logout
+                  <svg
+                    className="w-8 h-8 text-primary-600"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  >
+                    <circle cx="16" cy="12" r="6" stroke="currentColor" fill="#fff" />
+                    <path
+                      d="M6 26c0-4.418 4.477-8 10-8s10 3.582 10 8"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      fill="#fff"
+                    />
+                  </svg>
                 </button>
+                {desktopDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg py-3 z-50">
+                    {/* Username */}
+                    <div className="px-4 pb-2 border-b border-gray-100 mb-2">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
+                    </div>
+
+                    {/* Credits */}
+                    <div className="px-4 pb-2 border-b border-gray-100 mb-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-gray-500">Credits</span>
+                        <span className="text-sm font-semibold text-primary-700">{credits}</span>
+                      </div>
+                      <Link
+                        href="/credits"
+                        onClick={() => setDesktopDropdownOpen(false)}
+                        className="block w-full text-center px-3 py-1.5 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition"
+                      >
+                        Purchase Credits
+                      </Link>
+                    </div>
+
+                    {/* Demo / ML toggle */}
+                    <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">Mode:</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            isDemoMode
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                          }`}>
+                            {isDemoMode ? "Demo" : "ML Pipeline"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={toggleDemoMode}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                            isDemoMode ? "bg-yellow-400" : "bg-primary-600"
+                          }`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                            isDemoMode ? "translate-x-4" : "translate-x-0.5"
+                          }`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Scan History */}
+                    <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Scan History</p>
+                      {scanHistory.length === 0 ? (
+                        <p className="text-xs text-gray-400 italic">No scans yet</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {scanHistory.map((s) => (
+                            <Link
+                              key={s.id}
+                              href={`/scan/results?id=${s.id}`}
+                              onClick={() => setDesktopDropdownOpen(false)}
+                              className="flex items-center justify-between py-1 text-xs text-gray-700 hover:text-primary-700 transition"
+                            >
+                              <span className="capitalize">{s.prediction.species} · {s.prediction.weightKg} kg</span>
+                              <span className="text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Logout */}}
+                    <div className="px-2">
+                      <button
+                        onClick={() => {
+                          setDesktopDropdownOpen(false);
+                          handleLogout();
+                        }}
+                        className="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-semibold transition"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2 pl-3 border-l border-gray-200">
@@ -183,6 +281,52 @@ export function TopNav() {
                       >
                         Purchase Credits
                       </Link>
+                    </div>
+                    {/* Demo / ML toggle */}
+                    <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-700">Mode:</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            isDemoMode
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                          }`}>
+                            {isDemoMode ? "Demo" : "ML"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={toggleDemoMode}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                            isDemoMode ? "bg-yellow-400" : "bg-primary-600"
+                          }`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                            isDemoMode ? "translate-x-4" : "translate-x-0.5"
+                          }`} />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Scan History */}
+                    <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Scan History</p>
+                      {scanHistory.length === 0 ? (
+                        <p className="text-xs text-gray-400 italic">No scans yet</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {scanHistory.map((s) => (
+                            <Link
+                              key={s.id}
+                              href={`/scan/results?id=${s.id}`}
+                              onClick={() => setDropdownOpen(false)}
+                              className="flex items-center justify-between py-1 text-xs text-gray-700 hover:text-primary-700 transition"
+                            >
+                              <span className="capitalize">{s.prediction.species} · {s.prediction.weightKg} kg</span>
+                              <span className="text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => {

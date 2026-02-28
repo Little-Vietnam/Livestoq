@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { TopNav, BottomNav } from "@/components/Navigation";
 import { useAuth } from "@/components/AuthContext";
 
@@ -25,63 +25,112 @@ export default function Home() {
 
   const displayedText = heroText.slice(0, charIndex);
 
-  const heroImages = [
-    {
-      src: "https://cdn.britannica.com/55/174255-050-526314B6/brown-Guernsey-cow.jpg",
-      alt: "Cattle in a traditional Indonesian market",
-    },
-    {
-      src: "https://media.4-paws.org/4/9/8/9/49896113ec1edb7553e53df93fec214bfba35e4d/VIER%20PFOTEN_2015-04-27_010-3369x2246-3246x2246-1920x1329.jpg",
-      alt: "Farmer inspecting a cow in the field",
-    },
-    {
-      src: "https://images.twinkl.co.uk/tw1n/image/private/t_630_eco/website/uploaded/cow-6360406-1280-1729765657.jpg",
-      alt: "Healthy cattle herd walking in pasture",
-    },
-    {
-      src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJKLSAWro4ItSJjwqj02T3OQgwLwQ_Fbc3aw&s",
-      alt: "Close-up of a cow with ear tag",
-    },
-    {
-      src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Holstein_Cow_in_Mont%C3%A9r%C3%A9gie%2C_Quebec.jpg/1280px-Holstein_Cow_in_Mont%C3%A9r%C3%A9gie%2C_Quebec.jpg",
-      alt: "Livestock trader observing animals at market",
-    },
-    {
-      src: "https://cdn.sanity.io/images/5dqbssss/production-v3/a25daafbd63d028bacd81f322618de5ea1b9bc98-6720x4480.jpg?w=3840&q=75&fit=clip&auto=format",
-      alt: "Cows in a pen ready for sale",
-    },
-  ];
-
-  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  // ── "How it works" typing animation ──────────────────────────────
+  const howText = "How it works";
+  const [howCharIndex, setHowCharIndex] = useState(0);
+  const [howTypingDone, setHowTypingDone] = useState(false);
+  const [howVisible, setHowVisible] = useState(false);
+  const howRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentHeroIndex((prev) =>
-        prev === heroImages.length - 1 ? 0 : prev + 1
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
-
-  const handleNextImage = () => {
-    setCurrentHeroIndex((prev) =>
-      prev === heroImages.length - 1 ? 0 : prev + 1
+    const el = howRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setHowVisible(true); obs.disconnect(); } },
+      { threshold: 0.5 }
     );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!howVisible) return;
+    if (howCharIndex < howText.length) {
+      const t = setTimeout(() => setHowCharIndex((i) => i + 1), 60);
+      return () => clearTimeout(t);
+    } else {
+      setHowTypingDone(true);
+    }
+  }, [howVisible, howCharIndex, howText.length]);
+
+  const howDisplayed = howVisible ? howText.slice(0, howCharIndex) : "";
+
+  // ── Stoqy chat typing animation ─────────────────────────────────
+  const stoqyQuestion = "What vitamins should I give my cow?";
+  const stoqyAnswer = "For healthy cows, I recommend vitamin A, D, and E supplements. Vitamin A supports vision and immune function...";
+  const [stoqyVisible, setStoqyVisible] = useState(false);
+  const [qCharIndex, setQCharIndex] = useState(0);
+  const [aCharIndex, setACharIndex] = useState(0);
+  const [qDone, setQDone] = useState(false);
+  const [aDone, setADone] = useState(false);
+  const stoqyChatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = stoqyChatRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStoqyVisible(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!stoqyVisible) return;
+    if (qCharIndex < stoqyQuestion.length) {
+      const t = setTimeout(() => setQCharIndex((i) => i + 1), 35);
+      return () => clearTimeout(t);
+    } else {
+      setQDone(true);
+    }
+  }, [stoqyVisible, qCharIndex, stoqyQuestion.length]);
+
+  useEffect(() => {
+    if (!qDone) return;
+    if (aCharIndex < stoqyAnswer.length) {
+      const t = setTimeout(() => setACharIndex((i) => i + 1), 20);
+      return () => clearTimeout(t);
+    } else {
+      setADone(true);
+    }
+  }, [qDone, aCharIndex, stoqyAnswer.length]);
+
+  const heroImage = {
+    src: "/file.jpg",
+    alt: "Cow in a field",
   };
 
-  const handlePrevImage = () => {
-    setCurrentHeroIndex((prev) =>
-      prev === 0 ? heroImages.length - 1 : prev - 1
+  // ── Slide-up animation (IntersectionObserver for all sections) ────
+  const slideUpRefs = useRef<(HTMLElement | null)[]>([]);
+  const addSlideRef = useCallback((el: HTMLElement | null) => {
+    if (el && !slideUpRefs.current.includes(el)) {
+      slideUpRefs.current.push(el);
+    }
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
     );
-  };
+    slideUpRefs.current.forEach((el) => { if (el) observer.observe(el); });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
       <TopNav />
       
       {/* Hero Section */}
-      <section className="px-4 py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-primary-50 to-white">
+      <section ref={addSlideRef} className="animate-slide-up px-4 py-12 sm:py-16 lg:py-20 hero-gradient">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <div className="text-center lg:text-left space-y-6">
@@ -100,7 +149,7 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight min-h-[3.5em] sm:min-h-[2.5em]" style={{ fontFamily: "serif" }}>
                 {displayedText}
                 {!typingDone && (
-                  <span className="inline-block w-[3px] h-[1em] bg-primary-600 ml-1 align-baseline animate-pulse" />
+                  <span className="inline-block w-[3px] h-[1em] bg-gray-900 ml-1 align-baseline animate-pulse" />
                 )}
               </h1>
               <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0">
@@ -139,98 +188,15 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gray-100">
-                {heroImages.map((image, index) => (
-                  <div
-                    key={image.src}
-                    className={`absolute inset-0 transition-opacity duration-700 ${
-                      index === currentHeroIndex ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-xs sm:text-sm text-white/80 bg-black/40 inline-block px-3 py-1 rounded-full backdrop-blur">
-                        Livestock image {index + 1} of {heroImages.length}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="absolute inset-x-0 bottom-4 flex items-center justify-between px-4">
-                  <button
-                    type="button"
-                    onClick={handlePrevImage}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur transition"
-                    aria-label="Previous image"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12.5 5L8 9.5L12.5 14"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                  <div className="flex items-center gap-1.5">
-                    {heroImages.map((_, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => setCurrentHeroIndex(index)}
-                        className={`h-2.5 rounded-full transition-all ${
-                          index === currentHeroIndex
-                            ? "w-5 bg-white"
-                            : "w-2 bg-white/50"
-                        }`}
-                        aria-label={`Go to image ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleNextImage}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur transition"
-                    aria-label="Next image"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M7.5 5L12 9.5L7.5 14"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-xl p-4 border-2 border-primary-200 hidden lg:block">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-semibold text-gray-700">
-                    AI-verified insights on every listing
-                  </span>
-                </div>
+            <div className="flex items-center justify-center">
+              <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl border-4 border-primary-100 group cursor-pointer">
+                <Image
+                  src={heroImage.src}
+                  alt={heroImage.alt}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -238,7 +204,7 @@ export default function Home() {
       </section>
 
       {/* What Livestoq Delivers */}
-      <section className="px-4 py-16 sm:py-20 bg-white border-t border-gray-100">
+      <section ref={addSlideRef} className="animate-slide-up px-4 py-16 sm:py-20 bg-white border-t border-gray-100">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {/* Card 1 */}
@@ -288,61 +254,105 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="px-4 py-12 sm:py-16 bg-white">
+      {/* How It Works — Pipeline Flow */}
+      <section ref={(el) => { howRef.current = el; addSlideRef(el); }} className="animate-slide-up px-4 py-12 sm:py-16 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              How it works
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 min-h-[1.5em]" style={{ fontFamily: "serif" }}>
+              {howDisplayed}
+              {howVisible && !howTypingDone && (
+                <span className="inline-block w-[3px] h-[0.9em] bg-gray-900 ml-1 align-baseline animate-pulse" />
+              )}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Simple, secure, and transparent. Get AI-powered verification in three easy steps.
+              Our ML pipeline processes a single photo through multiple stages to deliver accurate livestock insights.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 hover:shadow-lg transition-shadow">
-              <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span className="text-3xl font-bold text-white">1</span>
+
+          {/* Pipeline Steps */}
+          <div className="relative">
+            {/* Connector line (desktop) */}
+            <div className="hidden md:block absolute top-24 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-primary-200 via-primary-400 to-primary-600 z-0" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+              {/* Step 1 — Segmentation */}
+              <div className="text-center group">
+                <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-primary-100 group-hover:border-primary-400 transition-all mb-4 aspect-square bg-gray-100">
+                  <Image
+                    src="/pipeline_01_segmentation.jpg"
+                    alt="Segmentation — isolating the animal from the background"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-bold shadow">1</span>
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm">Segmentation</h3>
+                <p className="text-xs text-gray-500 mt-1">Isolate the animal from its background</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Capture Your Livestock
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Take a side photo (required) plus an optional teeth image for age prediction
-              </p>
-            </div>
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 hover:shadow-lg transition-shadow">
-              <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span className="text-3xl font-bold text-white">2</span>
+
+              {/* Step 2 — Keypoint Detection */}
+              <div className="text-center group">
+                <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-primary-100 group-hover:border-primary-400 transition-all mb-4 aspect-square bg-gray-100">
+                  <Image
+                    src="/pipeline_02_keypoints.jpg"
+                    alt="Keypoint detection — 17 anatomical landmarks"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-bold shadow">2</span>
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm">Keypoint Detection</h3>
+                <p className="text-xs text-gray-500 mt-1">Locate 17 anatomical landmarks</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                AI Analysis
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Our AI assesses species, age, weight, health, and fair price range with confidence scores
-              </p>
-            </div>
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary-50 to-white border border-primary-100 hover:shadow-lg transition-shadow">
-              <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span className="text-3xl font-bold text-white">3</span>
+
+              {/* Step 3 — Pose Normalization */}
+              <div className="text-center group">
+                <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-primary-100 group-hover:border-primary-400 transition-all mb-4 aspect-square bg-gray-100">
+                  <Image
+                    src="/pipeline_03_normalized_pose.jpg"
+                    alt="Normalized pose — standardized body dimensions"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-bold shadow">3</span>
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm">Pose Normalization</h3>
+                <p className="text-xs text-gray-500 mt-1">Standardize body dimensions</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                Verified Listing
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                List with confidence or browse verified animals in our trusted marketplace
-              </p>
+
+              {/* Step 4 — Final Result */}
+              <div className="text-center group">
+                <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-primary-100 group-hover:border-primary-400 transition-all mb-4 aspect-square bg-gray-100">
+                  <Image
+                    src="/result.jpg"
+                    alt="Final result — weight prediction and health assessment"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-bold shadow">4</span>
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm">Weight & Health</h3>
+                <p className="text-xs text-gray-500 mt-1">Predict weight and detect conditions</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Stoqy Section */}
-      <section className="px-4 py-12 sm:py-16 bg-white">
+      <section ref={addSlideRef} className="animate-slide-up px-4 py-6 sm:py-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="order-2 lg:order-1">
-              <div className="bg-gradient-to-br from-primary-50 to-white rounded-2xl p-8 border border-primary-100">
+          <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+            <div className="order-2 lg:order-1 lg:col-span-7 relative lg:-mr-16">
+              <div className="bg-gradient-to-br from-primary-50 to-white rounded-2xl p-8 border border-primary-100 shadow-xl">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center">
                     <svg
@@ -441,85 +451,46 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 lg:col-span-5 lg:pl-8 relative z-10" ref={stoqyChatRef}>
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-200 shadow-lg">
                 <div className="space-y-4">
-                  <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                  {/* User question — typing animation */}
+                  <div className={`bg-white rounded-lg p-4 border border-gray-200 shadow-sm transition-opacity duration-300 ${stoqyVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-4 h-4 text-primary-700"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <circle
-                            cx="12"
-                            cy="9"
-                            r="3"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                          />
-                          <path
-                            d="M6.5 18C7.3 15.8 9.46 14.25 12 14.25C14.54 14.25 16.7 15.8 17.5 18"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                          />
+                        <svg className="w-4 h-4 text-primary-700" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M6.5 18C7.3 15.8 9.46 14.25 12 14.25C14.54 14.25 16.7 15.8 17.5 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                         </svg>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-700">What vitamins should I give my cow?</p>
+                      <div className="flex-1 min-h-[1.5em]">
+                        <p className="text-sm text-gray-700">
+                          {stoqyVisible ? stoqyQuestion.slice(0, qCharIndex) : ""}
+                          {stoqyVisible && !qDone && (
+                            <span className="inline-block w-[2px] h-[0.9em] bg-gray-900 ml-0.5 align-baseline animate-pulse" />
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-primary-50 rounded-lg p-4 border border-primary-200 shadow-sm ml-8">
+                  {/* Stoqy answer — typing animation (starts after question finishes) */}
+                  <div className={`bg-primary-50 rounded-lg p-4 border border-primary-200 shadow-sm ml-8 transition-opacity duration-500 ${qDone ? 'opacity-100' : 'opacity-0'}`}>
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <rect
-                            x="5"
-                            y="7"
-                            width="14"
-                            height="9"
-                            rx="3"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                          />
-                          <circle
-                            cx="10"
-                            cy="11"
-                            r="1.1"
-                            fill="currentColor"
-                          />
-                          <circle
-                            cx="14"
-                            cy="11"
-                            r="1.1"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M10 5L10 7"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M14 5L14 7"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                            strokeLinecap="round"
-                          />
+                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="5" y="7" width="14" height="9" rx="3" stroke="currentColor" strokeWidth="1.6" />
+                          <circle cx="10" cy="11" r="1.1" fill="currentColor" />
+                          <circle cx="14" cy="11" r="1.1" fill="currentColor" />
+                          <path d="M10 5L10 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          <path d="M14 5L14 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                         </svg>
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-h-[3em]">
                         <p className="text-sm text-gray-700">
-                          For healthy cows, I recommend vitamin A, D, and E supplements. Vitamin A supports vision and immune function...
+                          {qDone ? stoqyAnswer.slice(0, aCharIndex) : ""}
+                          {qDone && !aDone && (
+                            <span className="inline-block w-[2px] h-[0.9em] bg-primary-600 ml-0.5 align-baseline animate-pulse" />
+                          )}
                         </p>
                       </div>
                     </div>
@@ -531,65 +502,32 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ML Result Showcase */}
-      <section className="px-4 py-12 sm:py-16 bg-gradient-to-b from-white to-primary-50 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              See what our AI delivers
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              From a single side-view photo, Livestoq extracts body dimensions, estimates weight, and detects health conditions.
-            </p>
-          </div>
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-primary-100 bg-white">
-            <Image
-              src="/result.jpg"
-              alt="ML pipeline result showing segmentation, keypoints, dimensions, and weight prediction"
-              width={1920}
-              height={1080}
-              className="w-full h-auto"
-              priority={false}
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-              <div className="flex flex-wrap gap-3">
-                <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur font-medium">Segmentation</span>
-                <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur font-medium">17 Keypoints</span>
-                <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur font-medium">8 Body Dimensions</span>
-                <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur font-medium">Weight Prediction</span>
-                <span className="text-xs sm:text-sm px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur font-medium">Skin Disease Detection</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="px-4 py-8 bg-gray-900 text-gray-300">
+      <footer ref={addSlideRef} className="animate-slide-up px-4 py-8 bg-white text-gray-500 border-t border-gray-100">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-white font-semibold mb-4">Livestoq</h3>
+              <h3 className="text-gray-900 font-semibold mb-4">Livestoq</h3>
               <p className="text-sm">
                 Redefining the way livestock is trusted.
               </p>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-4">Legal</h3>
+              <h3 className="text-gray-900 font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-gray-900">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-gray-900">Terms of Service</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-4">Contact</h3>
+              <h3 className="text-gray-900 font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Support</a></li>
-                <li><a href="#" className="hover:text-white">About Us</a></li>
+                <li><a href="#" className="hover:text-gray-900">Support</a></li>
+                <li><a href="#" className="hover:text-gray-900">About Us</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm">
+          <div className="border-t border-gray-100 pt-8 text-center text-sm">
             <p>&copy; 2026 Livestoq. All rights reserved.</p>
           </div>
         </div>
