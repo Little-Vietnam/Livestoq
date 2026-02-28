@@ -506,7 +506,7 @@ function ScanResultsContent() {
                 prediction.healthRisk === "Medium" ? "text-yellow-600" :
                 "text-red-600"
               }`}>
-                {prediction.healthRisk}
+                {prediction.healthRisk === "Low" ? "Good" : prediction.healthRisk}
               </p>
               {prediction.healthRiskExplanation && (
                 <p className="text-sm text-gray-600 italic">{prediction.healthRiskExplanation}</p>

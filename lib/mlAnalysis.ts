@@ -74,24 +74,25 @@ function deriveHealthRisk(
   let risk: "Low" | "Medium" | "High";
   let explanation: string;
 
-  if (bcs >= 4 && bcs <= 7) {
+  if (bcs >= 3 && bcs <= 10) {
     risk = "Low";
     explanation = "Body condition is within the optimal range.";
-  } else if ((bcs >= 3 && bcs < 4) || (bcs > 7 && bcs <= 8)) {
+  } else if ((bcs >= 2 && bcs < 3) || (bcs > 10 && bcs <= 11)) {
     risk = "Medium";
     explanation = `BCS ${bcs.toFixed(1)} is slightly outside optimal range.`;
   } else {
     risk = "High";
-    explanation = bcs < 3
+    explanation = bcs < 2
       ? "Animal appears underweight, possible malnutrition."
-      : "Animal appears overconditioned, metabolic risk.";
+      : "Animal appears severely overconditioned, metabolic risk.";
   }
 
-  // Elevate risk if skin disease detected
+  // Elevate risk if skin disease detected with high confidence
   if (skinDisease) {
-    if (skinDisease.overall_status === "diseased") {
+    const highConfConditions = skinDisease.conditions.filter((c) => c.confidence >= 0.65);
+    if (skinDisease.overall_status === "diseased" && highConfConditions.length > 0) {
       risk = "High";
-      const diseaseNames = skinDisease.conditions.map((c) => c.name).join(", ");
+      const diseaseNames = highConfConditions.map((c) => c.name).join(", ");
       explanation += ` Skin conditions detected: ${diseaseNames}.`;
     } else if (skinDisease.overall_status === "suspect") {
       if (risk === "Low") risk = "Medium";
