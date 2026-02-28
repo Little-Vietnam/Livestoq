@@ -37,7 +37,11 @@ function persistUser(user: AuthUser | null) {
 export const auth = {
   login(username: string, password: string): boolean {
     // Hardcoded credentials
-    if (username === "Testing" && password === "Testing") {
+    const validCredentials =
+      (username === "Testing" && password === "Testing") ||
+      (username === "userdemo" && password === "12345678");
+
+    if (validCredentials) {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
