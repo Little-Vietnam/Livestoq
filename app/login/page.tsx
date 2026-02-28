@@ -116,7 +116,7 @@ function LoginContent() {
 
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <p className="text-xs text-gray-500 text-center">
-              Demo credentials: Username: <strong>Testing</strong>, Password: <strong>Testing</strong>
+              Demo credentials: Username: <strong>userdemo</strong>, Password: <strong>12345678</strong>
             </p>
           </div>
         </div>
