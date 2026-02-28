@@ -178,7 +178,7 @@ export function TopNav() {
                       )}
                     </div>
 
-                    {/* Logout */}}
+                    {/* Logout */}
                     <div className="px-2">
                       <button
                         onClick={() => {
